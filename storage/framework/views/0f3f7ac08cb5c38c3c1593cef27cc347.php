@@ -1,18 +1,16 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div dir="rtl" class="min-h-screen space-y-6 bg-[#0b0f0d] p-4 text-gray-100 md:p-8">
 
-    {{-- Header --}}
+    
     <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
             <div class="mb-2 flex items-center gap-2 text-sm text-gray-400">
-                <a href="{{ route('banks.show', $bank) }}"
+                <a href="<?php echo e(route('banks.show', $bank)); ?>"
                    class="transition hover:text-[#00ff66]">
                     البنوك
                 </a>
                 <span>/</span>
-                <span class="text-gray-300">{{ $bank->name }}</span>
+                <span class="text-gray-300"><?php echo e($bank->name); ?></span>
                 <span>/</span>
                 <span class="text-[#00ff66]">الشكاوى</span>
             </div>
@@ -22,23 +20,25 @@
             </h1>
 
             <p class="mt-2 text-sm text-gray-400">
-                متابعة وإدارة شكاوى العملاء الخاصة بـ {{ $bank->name }}
+                متابعة وإدارة شكاوى العملاء الخاصة بـ <?php echo e($bank->name); ?>
+
             </p>
         </div>
 
-        <a href="{{ route('banks.complaints.create', $bank) }}"
+        <a href="<?php echo e(route('banks.complaints.create', $bank)); ?>"
            class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00ff66] px-5 py-3 font-bold text-black transition hover:bg-[#00dc59]">
             <span>＋</span>
             إضافة شكوى
         </a>
     </div>
 
-    {{-- Summary --}}
+    
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div class="rounded-2xl border border-white/10 bg-[#121916] p-5">
             <p class="text-sm text-gray-400">إجمالي الشكاوى</p>
             <p class="mt-3 text-3xl font-bold text-[#00ff66]">
-                {{ number_format($complaints->total()) }}
+                <?php echo e(number_format($complaints->total())); ?>
+
             </p>
             <p class="mt-2 text-xs text-gray-500">
                 إجمالي النتائج المطابقة للبحث
@@ -48,25 +48,26 @@
         <div class="rounded-2xl border border-white/10 bg-[#121916] p-5">
             <p class="text-sm text-gray-400">عدد النتائج في الصفحة</p>
             <p class="mt-3 text-3xl font-bold">
-                {{ $complaints->count() }}
+                <?php echo e($complaints->count()); ?>
+
             </p>
             <p class="mt-2 text-xs text-gray-500">
-                من أصل {{ number_format($complaints->total()) }} شكوى
+                من أصل <?php echo e(number_format($complaints->total())); ?> شكوى
             </p>
         </div>
     </div>
 
-    {{-- Search --}}
+    
     <div class="rounded-2xl border border-white/10 bg-[#121916] p-4 md:p-5">
         <form method="GET"
-              action="{{ route('banks.complaints.index', $bank) }}"
+              action="<?php echo e(route('banks.complaints.index', $bank)); ?>"
               class="flex flex-col gap-3 md:flex-row">
 
             <div class="relative flex-1">
                 <input
                     type="search"
                     name="search"
-                    value="{{ $search ?? request('search') }}"
+                    value="<?php echo e($search ?? request('search')); ?>"
                     placeholder="ابحث برقم الشكوى أو اسم العميل أو عنوان الشكوى..."
                     class="w-full rounded-xl border border-white/10 bg-[#0b0f0d] px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-[#00ff66]"
                 >
@@ -76,9 +77,9 @@
                 name="per_page"
                 class="rounded-xl border border-white/10 bg-[#0b0f0d] px-4 py-3 text-sm text-white outline-none focus:border-[#00ff66]"
             >
-                <option value="15" @selected(($perPage ?? 15) === 15)>15 نتيجة</option>
-                <option value="25" @selected(($perPage ?? 15) === 25)>25 نتيجة</option>
-                <option value="50" @selected(($perPage ?? 15) === 50)>50 نتيجة</option>
+                <option value="15" <?php if(($perPage ?? 15) === 15): echo 'selected'; endif; ?>>15 نتيجة</option>
+                <option value="25" <?php if(($perPage ?? 15) === 25): echo 'selected'; endif; ?>>25 نتيجة</option>
+                <option value="50" <?php if(($perPage ?? 15) === 50): echo 'selected'; endif; ?>>50 نتيجة</option>
             </select>
 
             <button
@@ -88,26 +89,28 @@
                 بحث
             </button>
 
-            @if (filled($search ?? request('search')))
-                <a href="{{ route('banks.complaints.index', $bank) }}"
+            <?php if(filled($search ?? request('search'))): ?>
+                <a href="<?php echo e(route('banks.complaints.index', $bank)); ?>"
                    class="rounded-xl border border-white/10 px-5 py-3 text-center text-sm text-gray-300 transition hover:bg-white/5">
                     مسح
                 </a>
-            @endif
+            <?php endif; ?>
         </form>
     </div>
 
-    {{-- Complaints table --}}
+    
     <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#121916]">
         <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <h2 class="font-bold">سجل الشكاوى</h2>
             <span class="text-xs text-gray-400">
-                {{ $complaints->firstItem() ?? 0 }}–{{ $complaints->lastItem() ?? 0 }}
-                من {{ number_format($complaints->total()) }}
+                <?php echo e($complaints->firstItem() ?? 0); ?>–<?php echo e($complaints->lastItem() ?? 0); ?>
+
+                من <?php echo e(number_format($complaints->total())); ?>
+
             </span>
         </div>
 
-        @if ($complaints->isEmpty())
+        <?php if($complaints->isEmpty()): ?>
             <div class="px-5 py-16 text-center">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-2xl">
                     !
@@ -116,19 +119,19 @@
                 <h3 class="font-bold">لا توجد شكاوى</h3>
 
                 <p class="mt-2 text-sm text-gray-400">
-                    @if (filled($search ?? request('search')))
+                    <?php if(filled($search ?? request('search'))): ?>
                         لم يتم العثور على نتائج تطابق البحث.
-                    @else
+                    <?php else: ?>
                         لا توجد شكاوى مسجلة لهذا البنك حتى الآن.
-                    @endif
+                    <?php endif; ?>
                 </p>
 
-                <a href="{{ route('banks.complaints.create', $bank) }}"
+                <a href="<?php echo e(route('banks.complaints.create', $bank)); ?>"
                    class="mt-5 inline-flex rounded-xl bg-[#00ff66] px-5 py-3 text-sm font-bold text-black hover:bg-[#00dc59]">
                     تسجيل شكوى جديدة
                 </a>
             </div>
-        @else
+        <?php else: ?>
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[850px] text-right text-sm">
                     <thead class="bg-white/[0.03] text-xs text-gray-400">
@@ -145,8 +148,8 @@
                     </thead>
 
                     <tbody class="divide-y divide-white/[0.06]">
-                        @foreach ($complaints as $complaint)
-                            @php
+                        <?php $__currentLoopData = $complaints; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $complaint): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
                                 $status = strtolower((string) ($complaint->status ?? 'open'));
 
                                 $statusStyles = [
@@ -170,55 +173,63 @@
                                 if ($complaint->status instanceof \BackedEnum) {
                                     $status = strtolower((string) $complaint->status->value);
                                 }
-                            @endphp
+                            ?>
 
                             <tr class="transition hover:bg-white/[0.025]">
                                 <td class="px-5 py-4 font-semibold text-[#00ff66]">
-                                    #{{ $complaint->id }}
+                                    #<?php echo e($complaint->id); ?>
+
                                 </td>
 
                                 <td class="max-w-[240px] px-5 py-4">
                                     <div class="truncate font-medium text-gray-100">
-                                        {{ $complaint->subject ?? $complaint->title ?? 'شكوى بدون عنوان' }}
+                                        <?php echo e($complaint->subject ?? $complaint->title ?? 'شكوى بدون عنوان'); ?>
+
                                     </div>
                                     <div class="mt-1 text-xs text-gray-500">
-                                        {{ $complaint->category ?? 'شكوى عامة' }}
+                                        <?php echo e($complaint->category ?? 'شكوى عامة'); ?>
+
                                     </div>
                                 </td>
 
                                 <td class="px-5 py-4 text-gray-300">
-                                    {{ $complaint->client?->name ?? 'غير محدد' }}
+                                    <?php echo e($complaint->client?->name ?? 'غير محدد'); ?>
+
                                 </td>
 
                                 <td class="px-5 py-4 text-gray-400">
-                                    {{ $complaint->debtCase?->loan_number ?? '—' }}
+                                    <?php echo e($complaint->debtCase?->loan_number ?? '—'); ?>
+
                                 </td>
 
                                 <td class="px-5 py-4 text-gray-300">
-                                    {{ $complaint->assignedTo?->name ?? 'غير معيّن' }}
+                                    <?php echo e($complaint->assignedTo?->name ?? 'غير معيّن'); ?>
+
                                 </td>
 
                                 <td class="px-5 py-4">
-                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $statusStyles[$status] ?? 'bg-white/5 text-gray-300' }}">
-                                        {{ $statusLabels[$status] ?? $status }}
+                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold <?php echo e($statusStyles[$status] ?? 'bg-white/5 text-gray-300'); ?>">
+                                        <?php echo e($statusLabels[$status] ?? $status); ?>
+
                                     </span>
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-4 text-gray-400">
-                                    {{ $complaint->created_at?->format('Y-m-d') ?? '—' }}
+                                    <?php echo e($complaint->created_at?->format('Y-m-d') ?? '—'); ?>
+
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-4">
                                     <div class="flex items-center gap-2">
                                         <a
-                                            href="{{ route('banks.complaints.show', [$bank, $complaint]) }}"
+                                            href="<?php echo e(route('banks.complaints.show', [$bank, $complaint])); ?>"
                                             class="rounded-lg border border-white/10 px-3 py-2 text-xs transition hover:border-[#00ff66]/40 hover:text-[#00ff66]"
                                         >
                                             التفاصيل
                                         </a>
 
                                         <a
-                                            href="{{ route('banks.complaints.edit', [$bank, $complaint]) }}"
+                                            href="<?php echo e(route('banks.complaints.edit', [$bank, $complaint])); ?>"
                                             class="rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300 transition hover:bg-white/5"
                                         >
                                             تعديل
@@ -226,15 +237,17 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
 
             <div class="border-t border-white/10 px-5 py-4">
-                {{ $complaints->links() }}
+                <?php echo e($complaints->links()); ?>
+
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\ryada\projects\try\test\collex_views\resources\views/banks/complaints/index.blade.php ENDPATH**/ ?>

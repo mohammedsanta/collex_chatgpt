@@ -251,6 +251,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
                 ->whereNumber('bank')
                 ->name('ptp.create');
 
+            Route::get('/{bank}/cases/create', [BankWorkspaceController::class, 'createCase'])
+                ->whereNumber('bank')
+                ->name('cases.create');
+
+            Route::post('/{bank}/cases', [BankWorkspaceController::class, 'storeCase'])
+                ->whereNumber('bank')
+                ->name('cases.store');
+
             Route::post('/{bank}/ptp', [PromiseToPayController::class, 'store'])
                 ->whereNumber('bank')
                 ->name('ptp.store');

@@ -9,15 +9,18 @@ use App\Domain\Collections\Models\PromiseToPay;
 use App\Domain\Collections\Models\Visit;
 use App\Domain\Customers\Models\Client;
 use App\Domain\Institutions\Models\Bank;
+use App\Domain\Loans\Actions\CreateDebtCase;
 use App\Domain\Loans\Models\DebtCase;
 use App\Domain\Loans\Models\Portfolio;
 use App\Domain\Reports\Models\DailyCollectionReport;
 use App\Domain\Reports\Models\MonthlyArchive;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Loans\CreateDebtCaseRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 final class BankWorkspaceController extends Controller
 {
@@ -218,16 +221,62 @@ public function importScope(Bank $bank): View
         return view('banks.archives.show', compact('bank', 'archive'));
     }
 
-    public function promises(Bank $bank): View
-    {
-        $promises = PromiseToPay::query()
-            ->whereHas('debtCase.portfolio', fn ($query) => $query->where('bank_id', $bank->id))
-            ->with(['debtCase'])
-            ->latest('id')
-            ->paginate(15);
+public function promises(Request $request, Bank $bank): View
+{
+    $search = trim((string) $request->query('search', ''));
+    $status = (string) $request->query('status', '');
 
-        return view('banks.ptp.index', compact('bank', 'promises'));
-    }
+    $query = PromiseToPay::query()
+        ->with([
+            'debtCase.client',
+            'debtCase.portfolio',
+        ])
+        ->whereHas('debtCase.portfolio', function ($portfolioQuery) use ($bank) {
+            $portfolioQuery->where('bank_id', $bank->id);
+        })
+        ->when($search !== '', function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('notes', 'like', "%{$search}%")
+                    ->orWhereHas('debtCase', function ($caseQuery) use ($search) {
+                        $caseQuery->where('id', 'like', "%{$search}%")
+                            ->orWhereHas('client', function ($clientQuery) use ($search) {
+                                $clientQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+            });
+        })
+        ->when(
+            in_array($status, ['active', 'review', 'kept', 'partial', 'broken'], true),
+            fn ($query) => $query->where('status', $status)
+        );
+
+    $promises = (clone $query)
+        ->latest('id')
+        ->paginate(15)
+        ->withQueryString();
+
+    $statsQuery = PromiseToPay::query()
+        ->whereHas('debtCase.portfolio', function ($portfolioQuery) use ($bank) {
+            $portfolioQuery->where('bank_id', $bank->id);
+        });
+
+    $stats = [
+        'total' => (clone $statsQuery)->count(),
+        'active' => (clone $statsQuery)->where('status', 'active')->count(),
+        'review' => (clone $statsQuery)->where('status', 'review')->count(),
+        'promised_amount' => (float) (clone $statsQuery)
+            ->whereIn('status', ['active', 'review'])
+            ->sum('promised_amount'),
+    ];
+
+    return view('banks.ptp.index', compact(
+        'bank',
+        'promises',
+        'stats',
+        'search',
+        'status',
+    ));
+}
 
     public function createPromise(Bank $bank): View
     {
@@ -250,13 +299,39 @@ public function importScope(Bank $bank): View
         return view('banks.ptp.edit', compact('bank', 'promise', 'cases'));
     }
 
-    public function visits(Bank $bank): View
+
+    public function visits(Request $request, Bank $bank): View
     {
+        $search = trim((string) $request->query('search', ''));
+        $perPage = (int) $request->query('per_page', 15);
+
+        if (! in_array($perPage, [15, 25, 50], true)) {
+            $perPage = 15;
+        }
+
         $visits = Visit::query()
-            ->whereHas('debtCase.portfolio', fn ($query) => $query->where('bank_id', $bank->id))
-            ->with(['debtCase', 'user'])
+            ->whereHas(
+                'debtCase.portfolio',
+                fn ($query) => $query->where('bank_id', $bank->id)
+            )
+            ->with(['debtCase.client', 'user'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($visits) use ($search) {
+                    $visits->whereHas('debtCase', function ($cases) use ($search) {
+                        $cases->where('loan_number', 'like', "%{$search}%")
+                            ->orWhereHas('client', function ($clients) use ($search) {
+                                $clients->where('name', 'like', "%{$search}%");
+                            });
+                    });
+
+                    if (ctype_digit($search)) {
+                        $visits->orWhere('id', (int) $search);
+                    }
+                });
+            })
             ->latest('id')
-            ->paginate(15);
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('banks.visits.index', compact('bank', 'visits'));
     }
@@ -280,15 +355,40 @@ public function importScope(Bank $bank): View
         return view('banks.visits.edit', compact('bank', 'visit', 'cases'));
     }
 
-    public function complaints(Bank $bank): View
+    public function complaints(Request $request, Bank $bank): View
     {
+        $search = trim((string) $request->query('search', ''));
+
+        $perPage = (int) $request->query('per_page', 15);
+
+        if (! in_array($perPage, [15, 25, 50], true)) {
+            $perPage = 15;
+        }
+
         $complaints = Complaint::query()
             ->where('bank_id', $bank->id)
             ->with(['client', 'debtCase', 'assignedTo'])
-            ->latest('id')
-            ->paginate(15);
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($complaints) use ($search) {
+                    $complaints
+                        ->where('subject', 'like', "%{$search}%")
+                        ->orWhereHas('client', function ($clients) use ($search) {
+                            $clients->where('name', 'like', "%{$search}%");
+                        });
 
-        return view('banks.complaints.index', compact('bank', 'complaints'));
+                    if (ctype_digit($search)) {
+                        $complaints->orWhere('id', (int) $search);
+                    }
+                });
+            })
+            ->latest('id')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view(
+            'banks.complaints.index',
+            compact('bank', 'complaints', 'search', 'perPage')
+        );
     }
 
     public function createComplaint(Bank $bank): View
@@ -340,4 +440,32 @@ public function importScope(Bank $bank): View
     {
         return view('banks.distribution.create', compact('bank'));
     }
+
+    public function createCase(Bank $bank): View
+    {
+        $portfolios = $bank->portfolios()
+            ->latest('id')
+            ->get();
+
+        return view('banks.cases.create', compact('bank', 'portfolios'));
+    }
+
+    
+    public function storeCase(
+        CreateDebtCaseRequest $request,
+        Bank $bank,
+        CreateDebtCase $action
+    ): RedirectResponse {
+        $data = $request->validated();
+
+        // The bank is determined by the route, not by user input.
+        $data['bank_id'] = $bank->id;
+
+        $action->execute($data);
+
+        return redirect()
+            ->route('banks.cases.create', $bank)
+            ->with('success', 'تم إنشاء حالة القرض بنجاح.');
+    }
+    
 }

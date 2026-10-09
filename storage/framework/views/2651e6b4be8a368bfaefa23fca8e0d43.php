@@ -1,16 +1,14 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'تسجيل وعد سداد'); ?>
 
-@section('title', 'تسجيل وعد سداد')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div dir="rtl" class="mx-auto max-w-5xl space-y-6">
 
-    {{-- Page Header --}}
+    
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <div class="mb-2 flex items-center gap-2 text-sm text-gray-400">
                 <a
-                    href="{{ route('banks.ptp.index', ['bank' => $bank->id]) }}"
+                    href="<?php echo e(route('banks.ptp.index', ['bank' => $bank->id])); ?>"
                     class="transition hover:text-emerald-400"
                 >
                     وعود السداد
@@ -31,7 +29,7 @@
         </div>
 
         <a
-            href="{{ route('banks.ptp.index', ['bank' => $bank->id]) }}"
+            href="<?php echo e(route('banks.ptp.index', ['bank' => $bank->id])); ?>"
             class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-gray-300 transition hover:bg-white/10 hover:text-white"
         >
             <i class="fa-solid fa-arrow-right"></i>
@@ -39,7 +37,7 @@
         </a>
     </div>
 
-    {{-- Bank Information --}}
+    
     <div class="rounded-2xl border border-white/10 bg-gray-900/70 p-5">
         <div class="flex items-center gap-4">
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-xl text-emerald-400">
@@ -50,11 +48,13 @@
                 <p class="text-sm text-gray-400">البنك الحالي</p>
 
                 <h2 class="mt-1 text-lg font-semibold text-white">
-                    {{ $bank->name }}
+                    <?php echo e($bank->name); ?>
+
                 </h2>
 
                 <p class="mt-1 text-xs text-gray-500">
-                    رقم البنك: #{{ $bank->id }}
+                    رقم البنك: #<?php echo e($bank->id); ?>
+
                 </p>
             </div>
 
@@ -62,14 +62,15 @@
                 <p class="text-xs text-gray-500">الحالات المتاحة</p>
 
                 <p class="mt-1 text-xl font-bold text-emerald-400">
-                    {{ $cases->count() }}
+                    <?php echo e($cases->count()); ?>
+
                 </p>
             </div>
         </div>
     </div>
 
-    {{-- Validation Errors --}}
-    @if ($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
             <div class="flex items-start gap-3">
                 <i class="fa-solid fa-circle-exclamation mt-1 text-red-400"></i>
@@ -80,24 +81,24 @@
                     </h3>
 
                     <ul class="mt-2 list-inside list-disc space-y-1 text-sm text-red-200">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($error); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </ul>
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- Create Promise Form --}}
+    
     <form
-        action="{{ route('banks.ptp.store', ['bank' => $bank->id]) }}"
+        action="<?php echo e(route('banks.ptp.store', ['bank' => $bank->id])); ?>"
         method="POST"
         class="space-y-6"
     >
-        @csrf
+        <?php echo csrf_field(); ?>
 
-        {{-- Case Information --}}
+        
         <section class="overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70">
             <div class="border-b border-white/10 px-5 py-4 sm:px-6">
                 <div class="flex items-center gap-3">
@@ -119,7 +120,7 @@
 
             <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6">
 
-                {{-- Debt Case --}}
+                
                 <div class="sm:col-span-2">
                     <label
                         for="debt_case_id"
@@ -133,31 +134,41 @@
                         id="debt_case_id"
                         name="debt_case_id"
                         required
-                        @class([
+                        class="<?php echo \Illuminate\Support\Arr::toCssClasses([
                             'w-full rounded-xl border bg-gray-950 px-4 py-3 text-sm text-white outline-none transition focus:ring-2 focus:ring-emerald-500/30',
                             'border-red-500/50' => $errors->has('debt_case_id'),
                             'border-white/10 focus:border-emerald-500' => !$errors->has('debt_case_id'),
-                        ])
+                        ]); ?>"
                     >
                         <option value="">اختر حالة العميل</option>
 
-                        @foreach ($cases as $case)
+                        <?php $__currentLoopData = $cases; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $case): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <option
-                                value="{{ $case->id }}"
-                                @selected((string) old('debt_case_id') === (string) $case->id)
+                                value="<?php echo e($case->id); ?>"
+                                <?php if((string) old('debt_case_id') === (string) $case->id): echo 'selected'; endif; ?>
                             >
-                                حالة #{{ $case->id }}
-                                — {{ $case->client?->name ?? 'عميل غير محدد' }}
-                                — {{ $case->portfolio?->name ?? 'بدون محفظة' }}
+                                حالة #<?php echo e($case->id); ?>
+
+                                — <?php echo e($case->client?->name ?? 'عميل غير محدد'); ?>
+
+                                — <?php echo e($case->portfolio?->name ?? 'بدون محفظة'); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
 
-                    @error('debt_case_id')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['debt_case_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="mt-2 text-sm text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
 
-                    @if ($cases->isEmpty())
+                    <?php if($cases->isEmpty()): ?>
                         <div class="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-300">
                             <i class="fa-solid fa-triangle-exclamation mt-1"></i>
 
@@ -165,17 +176,17 @@
                                 لا توجد حالات متاحة لهذا البنك. أضف حالة إلى إحدى محافظه أولًا.
                             </p>
                         </div>
-                    @else
+                    <?php else: ?>
                         <p class="mt-2 text-xs text-gray-500">
                             يتم عرض الحالات التابعة لمحافظ هذا البنك فقط.
                         </p>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
             </div>
         </section>
 
-        {{-- Promise Details --}}
+        
         <section class="overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70">
             <div class="border-b border-white/10 px-5 py-4 sm:px-6">
                 <div class="flex items-center gap-3">
@@ -197,7 +208,7 @@
 
             <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6">
 
-                {{-- Promised Amount --}}
+                
                 <div>
                     <label
                         for="promised_amount"
@@ -212,25 +223,32 @@
                             id="promised_amount"
                             type="number"
                             name="promised_amount"
-                            value="{{ old('promised_amount') }}"
+                            value="<?php echo e(old('promised_amount')); ?>"
                             min="0.01"
                             step="0.01"
                             required
                             placeholder="مثال: 5000.00"
-                            @class([
+                            class="<?php echo \Illuminate\Support\Arr::toCssClasses([
                                 'w-full rounded-xl border bg-gray-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-600 focus:ring-2 focus:ring-emerald-500/30',
                                 'border-red-500/50' => $errors->has('promised_amount'),
                                 'border-white/10 focus:border-emerald-500' => !$errors->has('promised_amount'),
-                            ])
+                            ]); ?>"
                         />
                     </div>
 
-                    @error('promised_amount')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['promised_amount'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="mt-2 text-sm text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
-                {{-- Promise Date --}}
+                
                 <div>
                     <label
                         for="promise_date"
@@ -244,17 +262,24 @@
                         id="promise_date"
                         type="date"
                         name="promise_date"
-                        value="{{ old('promise_date') }}"
+                        value="<?php echo e(old('promise_date')); ?>"
                         required
                         class="w-full rounded-xl border border-white/10 bg-gray-950 px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                     />
 
-                    @error('promise_date')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['promise_date'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="mt-2 text-sm text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
-                {{-- Status --}}
+                
                 <div class="sm:col-span-2">
                     <label
                         for="status"
@@ -272,25 +297,32 @@
                     >
                         <option
                             value="active"
-                            @selected(old('status', 'active') === 'active')
+                            <?php if(old('status', 'active') === 'active'): echo 'selected'; endif; ?>
                         >
                             نشط — في انتظار السداد
                         </option>
 
                         <option
                             value="review"
-                            @selected(old('status') === 'review')
+                            <?php if(old('status') === 'review'): echo 'selected'; endif; ?>
                         >
                             قيد المراجعة
                         </option>
                     </select>
 
-                    @error('status')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['status'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="mt-2 text-sm text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
-                {{-- Notes --}}
+                
                 <div class="sm:col-span-2">
                     <label
                         for="notes"
@@ -306,11 +338,18 @@
                         maxlength="5000"
                         placeholder="أضف أي تفاصيل أو ملاحظات متعلقة بوعد السداد..."
                         class="w-full resize-y rounded-xl border border-white/10 bg-gray-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
-                    >{{ old('notes') }}</textarea>
+                    ><?php echo e(old('notes')); ?></textarea>
 
-                    @error('notes')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['notes'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="mt-2 text-sm text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
 
                     <p class="mt-2 text-xs text-gray-500">
                         الحد الأقصى 5000 حرف.
@@ -320,10 +359,10 @@
             </div>
         </section>
 
-        {{-- Form Actions --}}
+        
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <a
-                href="{{ route('banks.ptp.index', ['bank' => $bank->id]) }}"
+                href="<?php echo e(route('banks.ptp.index', ['bank' => $bank->id])); ?>"
                 class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-gray-300 transition hover:bg-white/10 hover:text-white"
             >
                 إلغاء
@@ -331,7 +370,7 @@
 
             <button
                 type="submit"
-                @disabled($cases->isEmpty())
+                <?php if($cases->isEmpty()): echo 'disabled'; endif; ?>
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-gray-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 <i class="fa-solid fa-floppy-disk"></i>
@@ -341,4 +380,5 @@
 
     </form>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\ryada\projects\try\test\collex_views\resources\views/banks/ptp/create.blade.php ENDPATH**/ ?>
