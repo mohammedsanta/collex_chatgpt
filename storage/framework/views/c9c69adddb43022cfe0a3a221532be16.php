@@ -1,21 +1,18 @@
+<?php $__env->startSection('title', 'استيراد البيانات'); ?>
 
-@extends('layouts.app')
-
-@section('title', 'استيراد البيانات')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div dir="rtl" class="space-y-6 text-slate-100">
 
-    {{-- Header --}}
+    
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <div class="mb-2 flex items-center gap-2 text-sm text-slate-400">
-                <a href="{{ route('banks.panel', ['bank' => $bank->id]) }}"
+                <a href="<?php echo e(route('banks.panel', ['bank' => $bank->id])); ?>"
                    class="transition hover:text-emerald-400">
                     البنوك
                 </a>
                 <span>/</span>
-                <span>{{ $bank->name }}</span>
+                <span><?php echo e($bank->name); ?></span>
                 <span>/</span>
                 <span class="text-emerald-400">استيراد البيانات</span>
             </div>
@@ -29,7 +26,7 @@
             </p>
         </div>
 
-        <a href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
+        <a href="<?php echo e(route('banks.distribution.index', ['bank' => $bank->id])); ?>"
            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700
                   bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200
                   transition hover:border-emerald-500 hover:text-emerald-400">
@@ -38,7 +35,7 @@
         </a>
     </div>
 
-    {{-- Bank information --}}
+    
     <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-4">
@@ -49,9 +46,10 @@
 
                 <div>
                     <p class="text-sm text-slate-400">البنك المحدد</p>
-                    <h2 class="mt-1 text-lg font-bold">{{ $bank->name }}</h2>
+                    <h2 class="mt-1 text-lg font-bold"><?php echo e($bank->name); ?></h2>
                     <p class="mt-1 text-xs text-slate-500">
-                        كود البنك: {{ $bank->code ?: '—' }}
+                        كود البنك: <?php echo e($bank->code ?: '—'); ?>
+
                     </p>
                 </div>
             </div>
@@ -59,39 +57,42 @@
             <div class="rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3">
                 <p class="text-xs text-slate-500">المحافظ المتاحة</p>
                 <p class="mt-1 text-xl font-bold text-emerald-400">
-                    {{ $portfolios->count() }}
+                    <?php echo e($portfolios->count()); ?>
+
                 </p>
             </div>
         </div>
     </div>
 
-    {{-- Flash messages --}}
-    @if (session('success'))
+    
+    <?php if(session('success')): ?>
         <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-300">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    @if (session('error'))
+        </div>
+    <?php endif; ?>
+
+    <?php if(session('error')): ?>
         <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-            {{ session('error') }}
-        </div>
-    @endif
+            <?php echo e(session('error')); ?>
 
-    @if ($errors->any())
+        </div>
+    <?php endif; ?>
+
+    <?php if($errors->any()): ?>
         <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
             <p class="mb-2 font-semibold text-red-300">يرجى مراجعة البيانات التالية:</p>
             <ul class="list-inside list-disc space-y-1 text-sm text-red-200">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
-        {{-- Upload form --}}
+        
         <section class="xl:col-span-2">
             <div class="h-full rounded-2xl border border-slate-800 bg-slate-900/70 p-5 sm:p-7">
                 <div class="mb-6 flex items-start gap-3">
@@ -108,25 +109,25 @@
                     </div>
                 </div>
 
-                @if ($portfolios->isEmpty())
+                <?php if($portfolios->isEmpty()): ?>
                     <div class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                         <p class="font-semibold text-amber-300">لا توجد محافظ لهذا البنك</p>
                         <p class="mt-2 text-sm text-slate-300">
                             أنشئ محفظة أولاً، ثم ارجع إلى هذه الصفحة لاستيراد بياناتها.
                         </p>
-                        <a href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
+                        <a href="<?php echo e(route('banks.distribution.index', ['bank' => $bank->id])); ?>"
                            class="mt-4 inline-flex rounded-lg bg-amber-400 px-4 py-2
                                   text-sm font-bold text-slate-950 transition hover:bg-amber-300">
                             الانتقال إلى المحافظ
                         </a>
                     </div>
-                @else
+                <?php else: ?>
                     <form id="portfolio-import-form"
                           method="POST"
-                          action="{{ route('portfolios.import.store', ['portfolio' => $portfolios->first()->id]) }}"
+                          action="<?php echo e(route('portfolios.import.store', ['portfolio' => $portfolios->first()->id])); ?>"
                           enctype="multipart/form-data"
                           class="space-y-6">
-                        @csrf
+                        <?php echo csrf_field(); ?>
 
                         <div>
                             <label for="portfolio_id"
@@ -142,15 +143,17 @@
                                            px-4 py-3 text-sm text-slate-100 outline-none
                                            transition focus:border-emerald-500 focus:ring-2
                                            focus:ring-emerald-500/10">
-                                @foreach ($portfolios as $portfolio)
-                                    <option value="{{ $portfolio->id }}"
-                                            data-import-url="{{ route('portfolios.import.store', ['portfolio' => $portfolio->id]) }}"
-                                            @selected((string) old('portfolio_id') === (string) $portfolio->id
-                                                || (!old('portfolio_id') && $loop->first))>
-                                        {{ $portfolio->name }}
-                                        — {{ $portfolio->period_month }}/{{ $portfolio->period_year }}
+                                <?php $__currentLoopData = $portfolios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $portfolio): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($portfolio->id); ?>"
+                                            data-import-url="<?php echo e(route('portfolios.import.store', ['portfolio' => $portfolio->id])); ?>"
+                                            <?php if((string) old('portfolio_id') === (string) $portfolio->id
+                                                || (!old('portfolio_id') && $loop->first)): echo 'selected'; endif; ?>>
+                                        <?php echo e($portfolio->name); ?>
+
+                                        — <?php echo e($portfolio->period_month); ?>/<?php echo e($portfolio->period_year); ?>
+
                                     </option>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
 
                             <p class="mt-2 text-xs text-slate-500">
@@ -237,11 +240,11 @@
                             </button>
                         </div>
                     </form>
-                @endif
+                <?php endif; ?>
             </div>
         </section>
 
-        {{-- Instructions --}}
+        
         <aside class="space-y-6">
             <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
                 <h3 class="font-bold">خطوات الاستيراد</h3>
@@ -343,4 +346,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\ryada\projects\try\test\collex_views\resources\views/banks/scope/import.blade.php ENDPATH**/ ?>

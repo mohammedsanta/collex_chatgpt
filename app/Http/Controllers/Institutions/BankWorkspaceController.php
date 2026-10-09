@@ -15,57 +15,152 @@ use App\Domain\Reports\Models\DailyCollectionReport;
 use App\Domain\Reports\Models\MonthlyArchive;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 final class BankWorkspaceController extends Controller
 {
-    public function clients(Bank $bank): View
-    {
-        $clients = Client::query()
-            ->whereHas('debtCases.portfolio', fn ($query) => $query->where('bank_id', $bank->id))
-            ->withCount([
-                'debtCases as bank_cases_count' => fn ($query) =>
-                    $query->whereHas('portfolio', fn ($portfolio) => $portfolio->where('bank_id', $bank->id)),
-            ])
-            ->paginate(15);
+public function clients(Request $request, Bank $bank): View
+{
+    $search = trim((string) $request->query('search', ''));
 
-        return view('banks.clients.index', compact('bank', 'clients'));
-    }
+    $clients = Client::query()
+        ->whereHas('debtCases', function ($query) use ($bank) {
+            $query->where(function ($cases) use ($bank) {
+                $cases->where('bank_id', $bank->id)
+                    ->orWhereHas('portfolio', function ($portfolio) use ($bank) {
+                        $portfolio->where('bank_id', $bank->id);
+                    });
+            });
+        })
+        ->with('governorate')
+        ->withCount([
+            'debtCases as bank_cases_count' => function ($query) use ($bank) {
+                $query->where(function ($cases) use ($bank) {
+                    $cases->where('bank_id', $bank->id)
+                        ->orWhereHas('portfolio', function ($portfolio) use ($bank) {
+                            $portfolio->where('bank_id', $bank->id);
+                        });
+                });
+            },
+        ])
+        ->when($search !== '', function ($query) use ($search) {
+            $query->where(function ($clients) use ($search) {
+                $clients->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('national_id', 'like', "%{$search}%");
+            });
+        })
+        ->orderBy('name')
+        ->paginate(15)
+        ->withQueryString();
 
-    public function assignClients(Bank $bank): View
-    {
-        $portfolios = $bank->portfolios()
-            ->latest('id')
+    return view('banks.clients.index', compact('bank', 'clients', 'search'));
+}
+
+public function assignClients(Bank $bank): View
+{
+    $portfolios = $bank->portfolios()
+        ->orderByDesc('id')
+        ->get();
+
+    // Show existing cases belonging to this bank.
+    // Assignment moves selected cases to another portfolio of the same bank.
+    $cases = DebtCase::query()
+        ->where(function ($query) use ($bank) {
+            $query->where('bank_id', $bank->id)
+                ->orWhereHas('portfolio', function ($portfolio) use ($bank) {
+                    $portfolio->where('bank_id', $bank->id);
+                });
+        })
+        ->with(['client', 'portfolio'])
+        ->latest('id')
+        ->paginate(25);
+
+    return view('banks.clients.assign', compact('bank', 'portfolios', 'cases'));
+}
+
+public function storeClientAssignments(Request $request, Bank $bank)
+{
+    $validated = $request->validate([
+        'portfolio_id' => ['required', 'integer', 'exists:portfolios,id'],
+        'case_ids' => ['required', 'array', 'min:1'],
+        'case_ids.*' => ['required', 'integer', 'distinct', 'exists:debt_cases,id'],
+    ]);
+
+    $portfolio = $bank->portfolios()
+        ->whereKey($validated['portfolio_id'])
+        ->firstOrFail();
+
+    DB::transaction(function () use ($validated, $bank, $portfolio) {
+        $cases = DebtCase::query()
+            ->whereIn('id', $validated['case_ids'])
+            ->where(function ($query) use ($bank) {
+                $query->where('bank_id', $bank->id)
+                    ->orWhereHas('portfolio', function ($portfolioQuery) use ($bank) {
+                        $portfolioQuery->where('bank_id', $bank->id);
+                    });
+            })
+            ->lockForUpdate()
             ->get();
 
-        $clients = Client::query()
-            ->orderBy('name')
-            ->limit(500)
-            ->get();
+        if ($cases->count() !== count($validated['case_ids'])) {
+            throw ValidationException::withMessages([
+                'case_ids' => 'بعض الحالات المحددة لا تتبع هذا البنك.',
+            ]);
+        }
 
-        return view('banks.clients.assign', compact('bank', 'portfolios', 'clients'));
-    }
+        foreach ($cases as $case) {
+            $case->portfolio_id = $portfolio->id;
+            $case->bank_id = $bank->id;
+            $case->save();
+        }
+    });
 
-    public function storeClientAssignments(Request $request, Bank $bank)
-    {
-        // Client-to-bank assignment is represented through debt cases
-        // belonging to portfolios for this bank. Do not create a separate
-        // client assignment until the business rule and schema are defined.
-        return back()->with(
-            'error',
-            'Assign clients through a portfolio or debt case.'
-        );
-    }
+    return redirect()
+        ->route('banks.clients.index', $bank)
+        ->with('success', 'تم نقل الحالات المحددة إلى المحفظة بنجاح.');
+}
 
-    public function distribution(Bank $bank): View
-    {
-        $portfolios = $bank->portfolios()
+
+public function distribution(Request $request, Bank $bank): View
+{
+    $search = trim((string) $request->query('search', ''));
+
+    $portfolios = $bank->portfolios()
+        ->withCount('debtCases')
+        ->withSum('debtCases', 'total_debt')
+        ->when($search !== '', function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('period_year', 'like', "%{$search}%");
+            });
+        })
+        ->orderByDesc('id')
+        ->paginate(15)
+        ->withQueryString();
+
+    $stats = [
+        'portfolios_count' => $bank->portfolios()->count(),
+        'cases_count' => $bank->portfolios()
             ->withCount('debtCases')
-            ->latest('id')
-            ->paginate(15);
+            ->get()
+            ->sum('debt_cases_count'),
+        'total_debt' => $bank->portfolios()
+            ->withSum('debtCases', 'total_debt')
+            ->get()
+            ->sum(fn ($portfolio) => (float) ($portfolio->debt_cases_sum_total_debt ?? 0)),
+    ];
 
-        return view('banks.distribution.index', compact('bank', 'portfolios'));
-    }
+    return view('banks.distribution.index', compact(
+        'bank',
+        'portfolios',
+        'stats',
+        'search'
+    ));
+}
 
     public function assignDistribution(Bank $bank): View
     {
@@ -87,12 +182,17 @@ final class BankWorkspaceController extends Controller
         );
     }
 
-    public function importScope(Bank $bank): View
-    {
-        $portfolios = $bank->portfolios()->latest('id')->get();
+public function importScope(Bank $bank): View
+{
+    $portfolios = $bank->portfolios()
+        ->orderByDesc('id')
+        ->get();
 
-        return view('banks.scope.import', compact('bank', 'portfolios'));
-    }
+    return view('banks.scope.import', compact(
+        'bank',
+        'portfolios'
+    ));
+}
 
     public function editScope(Bank $bank): View
     {
@@ -234,5 +334,10 @@ final class BankWorkspaceController extends Controller
             ->latest('id')
             ->limit(500)
             ->get();
+    }
+
+    public function createPortfolio(\App\Domain\Institutions\Models\Bank $bank)
+    {
+        return view('banks.distribution.create', compact('bank'));
     }
 }

@@ -1,1 +1,0 @@
-<?php /**PATH D:\ryada\projects\try\test\collex_views\resources\views/components/sidebar/tree-item.blade.php ENDPATH**/ ?>

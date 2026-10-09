@@ -208,6 +208,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
                 ->whereNumber('bank')
                 ->name('distribution.index');
 
+            Route::get('/{bank}/distribution/create', [BankWorkspaceController::class,'createPortfolio',])
+                    ->whereNumber('bank')
+                    ->name('distribution.create');
+
             Route::get('/{bank}/distribution/assign', [BankWorkspaceController::class, 'assignDistribution'])
                 ->whereNumber('bank')
                 ->name('distribution.assign');
