@@ -31,4 +31,14 @@ final class PermissionController extends Controller
     {
         $action->execute($permission);
     }
+
+    public function index()
+    {
+        $permissions = Permission::query()
+            ->orderBy('group')
+            ->orderBy('label')
+            ->paginate(25);
+
+        return view('permissions.index', compact('permissions'));
+    }
 }

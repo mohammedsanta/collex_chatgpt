@@ -27,4 +27,7 @@ final class RolePermissionController extends Controller
     ): void {
         $action->execute($role, $request->validated());
     }
+
+
+    
 }

@@ -1,6 +1,92 @@
 @extends('layouts.app')
+
 @section('title', 'فريق المستخدم')
+
 @section('content')
-<x-page-header title="فريق المستخدم" subtitle="استعراض التسلسل الإداري والمستخدمين التابعين للمشرف." eyebrow="إدارة المستخدمين / الفريق" icon="fa-people-group"><x-slot:actions>@if(isset($user) && \Illuminate\Support\Facades\Route::has('users.show'))<a href="{{ route('users.show',$user) }}" class="app-btn app-btn-secondary">ملف المستخدم</a>@endif</x-slot:actions></x-page-header>
-<div class="grid gap-5 xl:grid-cols-2"><x-panel title="المشرف المباشر" icon="fa-user-tie">@if($user->supervisor)<div class="flex items-center gap-3"><x-avatar :name="$user->supervisor->name"/><div><p class="text-xs font-extrabold">{{ $user->supervisor->name }}</p><p class="mt-1 text-[10px] text-dim">{{ $user->supervisor->employee_code ?? '—' }}</p></div></div>@else<x-empty-state title="لا يوجد مشرف مباشر" description="لم يتم ربط هذا المستخدم بمشرف حتى الآن." icon="fa-user-minus"/>@endif</x-panel><x-panel title="الأعضاء التابعون" subtitle="المستخدمون الذين يتبعون هذا المشرف" icon="fa-people-group"><div class="space-y-3">@forelse(($user->subordinates ?? collect()) as $member)<div class="flex items-center justify-between gap-3 rounded-xl border border-line p-3"><div class="flex items-center gap-3"><x-avatar :name="$member->name" size="sm"/><div><p class="text-xs font-extrabold">{{ $member->name }}</p><p class="mt-1 text-[9px] text-dim">{{ $member->role?->label ?? '—' }}</p></div></div><x-status-badge :status="$member->status ?? 'inactive'"/></div>@empty<x-empty-state title="لا يوجد أعضاء تابعون" description="لن تظهر أسماء هنا حتى يتم إسناد أعضاء للفريق." icon="fa-people-group"/>@endforelse</div></x-panel></div>
+
+    <x-page-header
+        title="الفريق التابع"
+        subtitle="عرض الهيكل الإداري والموظفين المرتبطين بالمستخدم."
+        eyebrow="إدارة المستخدمين / الفريق"
+        icon="fa-people-group"
+    >
+        <x-slot:actions>
+            <a href="{{ route('users.show', $user) }}" class="app-btn app-btn-secondary">
+                <i class="fa-solid fa-arrow-right"></i>
+                العودة للمستخدم
+            </a>
+        </x-slot:actions>
+    </x-page-header>
+
+    <div class="mt-5">
+        <x-panel title="المشرف المباشر" icon="fa-user-tie">
+
+            @if ($user->supervisor)
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-extrabold">{{ $user->supervisor->name }}</p>
+                        <p class="mt-1 text-[10px] text-dim">
+                            كود الموظف: {{ $user->supervisor->employee_code }}
+                        </p>
+                    </div>
+
+                    <a href="{{ route('users.show', $user->supervisor) }}" class="app-btn app-btn-secondary">
+                        <i class="fa-solid fa-eye"></i>
+                        عرض المشرف
+                    </a>
+                </div>
+            @else
+                <p class="py-4 text-center text-xs text-dim">
+                    لا يوجد مشرف مباشر مسجل لهذا المستخدم.
+                </p>
+            @endif
+
+        </x-panel>
+    </div>
+
+    <div class="mt-5">
+        <x-panel title="الموظفون التابعون" icon="fa-people-group">
+
+            <div class="table-wrap w-full overflow-x-auto">
+                <table class="data-table w-full min-w-[700px]">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الموظف</th>
+                            <th>كود الموظف</th>
+                            <th>الدور</th>
+                            <th>الحالة</th>
+                            <th>التفاصيل</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($user->subordinates as $employee)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td class="text-xs font-bold">{{ $employee->name }}</td>
+                                <td class="text-xs text-dim">{{ $employee->employee_code }}</td>
+                                <td class="text-xs">{{ $employee->role?->label ?? $employee->role?->name ?? '—' }}</td>
+                                <td class="text-xs">{{ $employee->status }}</td>
+                                <td>
+                                    <a href="{{ route('users.show', $employee) }}" class="app-btn app-btn-secondary !px-3 !py-2">
+                                        <i class="fa-solid fa-eye"></i>
+                                        عرض
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-xs text-dim">
+                                    لا يوجد موظفون تابعون لهذا المستخدم.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+        </x-panel>
+    </div>
+
 @endsection

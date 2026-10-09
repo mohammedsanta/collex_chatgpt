@@ -1,11 +1,25 @@
+
 @extends('layouts.app')
-@section('title', 'إنشاء دور جديد')
+
+@section('title', 'إضافة دور - Collex')
+
 @section('content')
-@php
-$formFields = [['name' => 'name', 'label' => 'المعرف البرمجي', 'type' => 'text', 'required' => true, 'full' => false],
-        ['name' => 'label', 'label' => 'اسم الدور', 'type' => 'text', 'required' => true, 'full' => false],
-        ['name' => 'level', 'label' => 'مستوى الدور', 'type' => 'number', 'required' => true, 'full' => false],
-        ['name' => 'description', 'label' => 'الوصف', 'type' => 'textarea', 'required' => false, 'full' => true]];
-@endphp
-<x-module-form title="إنشاء دور جديد" subtitle="أنشئ دورًا وحدد مستوى الوصول الخاص به." icon="fa-shield-halved" :fields="$formFields" action-route="roles.store" back-route="roles.index" :record="$role ?? $record ?? null" :editing="false" submit-label="إنشاء السجل" />
+<div class="space-y-6" dir="rtl">
+
+    <x-page-header
+        title="إضافة دور جديد"
+        subtitle="إنشاء دور مخصص لتحديد مسؤوليات الموظفين."
+    />
+
+    <x-flash />
+
+    <x-panel title="بيانات الدور">
+        <form action="{{ route('roles.store') }}" method="POST">
+            @csrf
+
+            @include('roles.partials.form')
+        </form>
+    </x-panel>
+
+</div>
 @endsection

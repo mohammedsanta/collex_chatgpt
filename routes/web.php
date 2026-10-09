@@ -343,26 +343,84 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::delete('/installment-companies/{installmentCompany}', [InstallmentCompanyController::class, 'destroy'])->whereNumber('installmentCompany')->name('installment-companies.destroy');
 
     /* Employees and users */
-    Route::view('/employees', 'employees.index')->name('employees.index');
-    Route::view('/employees/{employee}', 'employees.show')->whereNumber('employee')->name('employees.show');
-    Route::view('/users', 'users.index')->name('users.index');
-    Route::view('/users/create', 'users.create')->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::view('/users/{user}', 'users.show')->whereNumber('user')->name('users.show');
-    Route::view('/users/{user}/edit', 'users.edit')->whereNumber('user')->name('users.edit');
-    Route::put('/users/{user}', [UserController::class, 'update'])->whereNumber('user')->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->whereNumber('user')->name('users.destroy');
-    Route::view('/users/{user}/team', 'users.team')->whereNumber('user')->name('users.team');
-    Route::view('/users/{user}/assignments', 'users.assignments')->whereNumber('user')->name('users.assignments');
-    Route::view('/users/{user}/permissions', 'users.permissions')->whereNumber('user')->name('users.permissions');
-    Route::post('/users/{user}/banks', [UserBankController::class, 'assign'])->whereNumber('user')->name('users.banks.assign');
-    Route::post('/users/{user}/installment-companies', [UserInstallmentCompanyController::class, 'assign'])->whereNumber('user')->name('users.installment-companies.assign');
-    Route::post('/users/{user}/supervisor', [UserSupervisorController::class, 'assign'])->whereNumber('user')->name('users.supervisor.assign');
-    Route::post('/users/{user}/role', [UserRoleController::class, 'assign'])->whereNumber('user')->name('users.role.assign');
-    Route::put('/users/{user}/permissions', [UserPermissionController::class, 'update'])->whereNumber('user')->name('users.permissions.update');
+
+    /* Employees and users */
+
+    Route::view('/employees', 'employees.index')
+        ->name('employees.index');
+
+    Route::view('/employees/{employee}', 'employees.show')
+        ->whereNumber('employee')
+        ->name('employees.show');
+
+    /* Users CRUD */
+    Route::get('/users', [UserController::class, 'index'])
+        ->name('users.index');
+
+    Route::get('/users/create', [UserController::class, 'create'])
+        ->name('users.create');
+
+    Route::post('/users', [UserController::class, 'store'])
+        ->name('users.store');
+
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])
+        ->whereNumber('user')
+        ->name('users.edit');
+
+    Route::get('/users/{user}', [UserController::class, 'show'])
+        ->whereNumber('user')
+        ->name('users.show');
+
+    Route::put('/users/{user}', [UserController::class, 'update'])
+        ->whereNumber('user')
+        ->name('users.update');
+
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])
+        ->whereNumber('user')
+        ->name('users.destroy');
+
+
+    /* User workspace */
+    Route::get('/users/{user}/team', [
+        UserController::class,
+        'team',
+    ])->whereNumber('user')->name('users.team');
+
+    Route::get('/users/{user}/assignments', [
+        UserController::class,
+        'assignments',
+    ])->whereNumber('user')->name('users.assignments');
+
+    Route::get('/users/{user}/permissions', [
+        UserController::class,
+        'permissions',
+    ])->whereNumber('user')->name('users.permissions');
+
+
+    /* User relationships and access control */
+    Route::post('/users/{user}/banks', [UserBankController::class, 'assign'])
+        ->whereNumber('user')
+        ->name('users.banks.assign');
+
+    Route::post('/users/{user}/installment-companies', [UserInstallmentCompanyController::class, 'assign'])
+        ->whereNumber('user')
+        ->name('users.installment-companies.assign');
+
+    Route::post('/users/{user}/supervisor', [UserSupervisorController::class, 'assign'])
+        ->whereNumber('user')
+        ->name('users.supervisor.assign');
+
+    Route::post('/users/{user}/role', [UserRoleController::class, 'assign'])
+        ->whereNumber('user')
+        ->name('users.role.assign');
+
+    Route::put('/users/{user}/permissions', [UserPermissionController::class, 'update'])
+        ->whereNumber('user')
+        ->name('users.permissions.update');
+
 
     /* Roles and permissions */
-    Route::view('/roles', 'roles.index')->name('roles.index');
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
     Route::view('/roles/create', 'roles.create')->name('roles.create');
     Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
     Route::view('/roles/{role}/edit', 'roles.edit')->whereNumber('role')->name('roles.edit');
@@ -372,6 +430,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::post('/permissions', [PermissionController::class, 'store'])->name('permissions.store');
     Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->whereNumber('permission')->name('permissions.update');
     Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])->whereNumber('permission')->name('permissions.destroy');
+    Route::get('/permissions', [PermissionController::class, 'index'])
+    ->name('permissions.index');
 
     /* Reports and archives */
     Route::view('/reports', 'reports.index')->name('reports.index');
