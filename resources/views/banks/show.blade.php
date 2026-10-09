@@ -1,8 +1,151 @@
+
 @extends('layouts.app')
-@section('title', $bank->name ?? 'تفاصيل البنك')
+
+@section('title', ($bank->name ?? 'البنك') . ' | Collex')
+
 @section('content')
-<x-bank-header :bank="$bank" subtitle="لوحة المؤسسة والمحافظ المرتبطة بها"><x-slot:actions>@if(\Illuminate\Support\Facades\Route::has('banks.edit'))<a href="{{ route('banks.edit',$bank) }}" class="app-btn border border-white/15 bg-white/5 text-white hover:bg-white/10"><i class="fa-solid fa-pen"></i> تعديل البيانات</a>@endif</x-slot:actions></x-bank-header>
-<div class="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><x-stat-card label="عدد المحافظ" :value="number_format($bank->portfolios?->count() ?? 0)" icon="fa-boxes-stacked" color="green"/><x-stat-card label="عدد القضايا" :value="number_format($bank->debtCases?->count() ?? 0)" icon="fa-file-invoice-dollar" color="blue"/><x-stat-card label="إجمالي الدين" :value="number_format((float)($bank->portfolios?->sum('total_debt') ?? 0),2).' ج.م'" icon="fa-scale-balanced" color="orange"/><x-stat-card label="الحالة" :value="($bank->is_active ?? false) ? 'نشط' : 'غير نشط'" icon="fa-circle-check" color="purple"/></div>
-<div class="grid gap-5 xl:grid-cols-[.8fr_1.2fr]"><x-panel title="بيانات المؤسسة" subtitle="التفاصيل الأساسية" icon="fa-building-columns"><dl class="space-y-4"><div><dt class="text-[10px] font-bold text-dim">اسم البنك</dt><dd class="mt-1 text-xs font-extrabold">{{ $bank->name }}</dd></div><div><dt class="text-[10px] font-bold text-dim">الكود</dt><dd class="mt-1 font-mono text-xs">{{ $bank->code }}</dd></div><div><dt class="text-[10px] font-bold text-dim">القطاع</dt><dd class="mt-1 text-xs">{{ $bank->sector ?? '—' }}</dd></div><div><dt class="text-[10px] font-bold text-dim">ملاحظات</dt><dd class="mt-1 whitespace-pre-line text-xs leading-6">{{ $bank->notes ?? '—' }}</dd></div></dl><div class="mt-5"><x-status-badge :status="($bank->is_active ?? false) ? 'active' : 'inactive'"/></div></x-panel><x-panel title="المحافظ المرتبطة" subtitle="نظرة على المحافظ المتاحة" icon="fa-boxes-stacked" :padding="false"><div class="overflow-x-auto"><table class="app-table"><thead><tr><th>اسم المحفظة</th><th>الفترة</th><th>عدد القضايا</th><th>إجمالي الدين</th><th>الحالة</th></tr></thead><tbody>@forelse(($bank->portfolios ?? collect()) as $portfolio)<tr><td class="font-extrabold">{{ $portfolio->name }}</td><td>{{ $portfolio->period_year }}/{{ str_pad((string)$portfolio->period_month,2,'0',STR_PAD_LEFT) }}</td><td>{{ number_format($portfolio->cases_count ?? 0) }}</td><td class="font-extrabold">{{ number_format((float)($portfolio->total_debt ?? 0),2) }} ج.م</td><td><x-status-badge :status="$portfolio->status ?? 'draft'"/></td></tr>@empty<tr><td colspan="5"><x-empty-state title="لا توجد محافظ مرتبطة" description="ستظهر المحافظ بعد إنشاء أول محفظة لهذا البنك." icon="fa-box-open"/></td></tr>@endforelse</tbody></table></div></x-panel></div>
-<div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><x-hub-tile title="عملاء البنك" description="العملاء المرتبطون بالمحافظ." icon="fa-users" href="{{ \Illuminate\Support\Facades\Route::has('banks.clients.index') ? route('banks.clients.index',$bank) : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.clients.index')"/><x-hub-tile title="توزيع المحافظ" description="إسناد القضايا إلى فريق التحصيل." icon="fa-diagram-project" href="{{ \Illuminate\Support\Facades\Route::has('banks.distribution.index') ? route('banks.distribution.index',$bank) : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.distribution.index')"/><x-hub-tile title="الشكاوى" description="متابعة الشكاوى المرتبطة بالبنك." icon="fa-message" href="{{ \Illuminate\Support\Facades\Route::has('banks.complaints.index') ? route('banks.complaints.index',$bank) : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.complaints.index')"/><x-hub-tile title="الأرشيف" description="استعراض اللقطات الشهرية." icon="fa-box-archive" href="{{ \Illuminate\Support\Facades\Route::has('banks.archives.index') ? route('banks.archives.index',$bank) : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.archives.index')"/></div>
+<div class="space-y-6 rounded-2xl bg-slate-950 p-4 text-slate-100 md:p-6">
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <p class="text-sm font-semibold text-emerald-400">COLLEX / البنوك</p>
+            <h1 class="mt-2 text-3xl font-bold">{{ $bank->name }}</h1>
+            <p class="mt-2 text-sm text-slate-400">
+                كود البنك: {{ $bank->code }} · رقم السجل: #{{ $bank->id }}
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('banks.index') }}"
+               class="rounded-xl border border-slate-700 px-4 py-3 hover:bg-slate-800">
+                كل البنوك
+            </a>
+            <a href="{{ route('banks.edit', $bank) }}"
+               class="rounded-xl bg-emerald-400 px-4 py-3 font-bold text-slate-950 hover:bg-emerald-300">
+                تعديل البنك
+            </a>
+        </div>
+    </div>
+
+    @include('banks._nav', ['bank' => $bank])
+
+    @if (session('success'))
+        <div class="rounded-xl border border-emerald-700 bg-emerald-950 p-4 text-emerald-300">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <section class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold">بيانات البنك</h2>
+                <p class="mt-1 text-sm text-slate-400">ملخص البيانات الأساسية وحالة البنك.</p>
+            </div>
+
+            @if ($bank->is_active)
+                <span class="rounded-full bg-emerald-950 px-3 py-1 text-sm text-emerald-300">
+                    نشط
+                </span>
+            @else
+                <span class="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-400">
+                    غير نشط
+                </span>
+            @endif
+        </div>
+
+        <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-sm text-slate-500">القطاع</p>
+                <p class="mt-2 font-semibold">{{ $bank->sector ?: 'غير محدد' }}</p>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-sm text-slate-500">المستخدمون المرتبطون</p>
+                <p class="mt-2 text-2xl font-bold">{{ number_format($bank->users_count ?? 0) }}</p>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-sm text-slate-500">المحافظ</p>
+                <p class="mt-2 text-2xl font-bold">{{ number_format($bank->portfolios_count ?? 0) }}</p>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-sm text-slate-500">تاريخ الإنشاء</p>
+                <p class="mt-2 font-semibold">{{ $bank->created_at?->format('Y-m-d') ?? '—' }}</p>
+            </div>
+        </div>
+
+        @if ($bank->notes)
+            <div class="mt-5 rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-sm text-slate-500">ملاحظات</p>
+                <p class="mt-2 whitespace-pre-line text-slate-300">{{ $bank->notes }}</p>
+            </div>
+        @endif
+    </section>
+
+    <section class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-bold">محافظ البنك</h2>
+                <p class="mt-1 text-sm text-slate-400">أحدث المحافظ المسجلة لهذا البنك.</p>
+            </div>
+            <a href="{{ route('banks.distribution.index', $bank) }}"
+               class="text-sm font-semibold text-emerald-400 hover:text-emerald-300">
+                عرض التوزيع ←
+            </a>
+        </div>
+
+        <div class="mt-5 overflow-x-auto">
+            <table class="min-w-full text-right text-sm">
+                <thead class="bg-slate-800 text-slate-300">
+                    <tr>
+                        <th class="px-4 py-3">اسم المحفظة</th>
+                        <th class="px-4 py-3">الفترة</th>
+                        <th class="px-4 py-3">عدد الحالات</th>
+                        <th class="px-4 py-3">إجمالي المديونية</th>
+                        <th class="px-4 py-3">الحالة</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800">
+                    @forelse ($portfolios as $portfolio)
+                        <tr>
+                            <td class="px-4 py-4 font-semibold">{{ $portfolio->name }}</td>
+                            <td class="px-4 py-4 text-slate-300">
+                                {{ $portfolio->period_month }}/{{ $portfolio->period_year }}
+                            </td>
+                            <td class="px-4 py-4">{{ number_format($portfolio->cases_count ?? 0) }}</td>
+                            <td class="px-4 py-4 tabular-nums">
+                                {{ number_format((float) ($portfolio->total_debt ?? 0), 2) }}
+                            </td>
+                            <td class="px-4 py-4 text-slate-300">{{ $portfolio->status ?? '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-4 py-10 text-center text-slate-500">
+                                لا توجد محافظ مسجلة لهذا البنك حتى الآن.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">{{ $portfolios->links() }}</div>
+    </section>
+
+    <section class="rounded-2xl border border-rose-900/60 bg-slate-900 p-5">
+        <h2 class="font-bold text-rose-300">إجراءات إدارية</h2>
+        <p class="mt-2 text-sm text-slate-400">
+            حذف البنك إجراء دائم وقد يتأثر بالسجلات المرتبطة به.
+        </p>
+
+        <form method="POST" action="{{ route('banks.destroy', $bank) }}"
+              class="mt-4"
+              onsubmit="return confirm('هل أنت متأكد من حذف هذا البنك؟')">
+            @csrf
+            @method('DELETE')
+            <button type="submit"
+                    class="rounded-xl border border-rose-800 px-4 py-2 text-sm text-rose-300 hover:bg-rose-950">
+                حذف البنك
+            </button>
+        </form>
+    </section>
+</div>
 @endsection
