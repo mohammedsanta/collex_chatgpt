@@ -1,0 +1,2 @@
+@props(['href' => '#', 'icon' => 'fa-eye', 'label' => 'عرض', 'tone' => 'gray', 'method' => null])
+<a href="{{ $href }}" title="{{ $label }}" aria-label="{{ $label }}" @class(['inline-grid h-8 w-8 place-items-center rounded-lg border text-[11px] transition hover:-translate-y-0.5', 'border-line bg-surface text-muted hover:border-brand/25 hover:text-brand' => $tone === 'gray', 'border-brand/20 bg-brand/10 text-brand' => $tone === 'green', 'border-danger/20 bg-danger/10 text-danger' => $tone === 'red'])><i class="fa-solid {{ $icon }}"></i></a>

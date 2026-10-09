@@ -1,0 +1,163 @@
+/* Collex UI — Tailwind CSS v4. One source of truth for the visual system. */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+@source "../views/**/*.blade.php";
+@source "../js/**/*.js";
+
+@theme {
+    --color-orange: #fb923c;
+    --color-cyan: #22d3ee;
+    --color-track: #1e252b;
+    --color-base: #0b0f12;
+    --color-surface: #11161a;
+    --color-surface-raised: #151c21;
+    --color-line: rgb(255 255 255 / 0.075);
+    --color-fg: #f4f7f5;
+    --color-muted: #8c98a5;
+    --color-dim: #586571;
+    --color-brand: #00ff66;
+    --color-info: #00aaff;
+    --color-accent: #a855f7;
+    --color-warning: #facc15;
+    --color-danger: #f87171;
+    --color-pink: #f472b6;
+    --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+    :root { color-scheme: dark; font-synthesis: none; text-rendering: optimizeLegibility; }
+    html { min-height: 100%; background: var(--color-base); scroll-behavior: smooth; }
+    body { @apply min-h-screen bg-base font-sans text-fg antialiased; }
+    button, input, select, textarea { font: inherit; }
+    button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+    input, select, textarea { color-scheme: dark; }
+    a { @apply transition-colors duration-150; }
+    ::selection { background: rgb(0 255 102 / .22); color: #fff; }
+    :focus-visible { outline: 2px solid rgb(0 255 102 / .65); outline-offset: 2px; }
+}
+
+@layer components {
+    .alert { @apply rounded-xl border px-4 py-3 text-sm; }
+    .alert-success { @apply border-brand/20 bg-brand/10 text-brand; }
+    .alert-danger { @apply border-danger/20 bg-danger/10 text-danger; }
+    .card { @apply rounded-2xl border border-line bg-surface p-5; }
+    .chip { @apply inline-flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-fg; }
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-200 disabled:cursor-not-allowed disabled:opacity-50; }
+    .btn-primary { @apply bg-brand text-black hover:bg-brand/90; }
+    .btn-secondary { @apply border border-line bg-white/[0.04] text-fg hover:bg-white/[0.08]; }
+    .btn-danger { @apply border border-danger/20 bg-danger/10 text-danger hover:bg-danger/20; }
+    .btn-sm { @apply px-3 py-1.5 text-xs; }
+    .form-label { @apply mb-1.5 block text-xs font-bold text-muted; }
+    .form-input { @apply w-full rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 text-sm text-fg placeholder:text-dim transition focus:border-brand/40 focus:outline-none focus:ring-2 focus:ring-brand/10; }
+    .form-error { @apply mt-1 text-xs text-danger; }
+    .table-wrap { @apply overflow-x-auto rounded-2xl border border-line bg-surface; }
+    .data-table { @apply w-full text-sm; }
+    .data-table th { @apply border-b border-line bg-white/[0.025] px-4 py-3 text-right text-[11px] font-extrabold tracking-wide text-dim; }
+    .data-table td { @apply border-b border-line px-4 py-3 text-muted; }
+    .data-table tbody tr:last-child td { @apply border-b-0; }
+    .data-table tbody tr:hover { @apply bg-white/[0.025]; }
+    .badge { @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold; }
+    .badge-success { @apply bg-brand/10 text-brand; }
+    .badge-info { @apply bg-info/10 text-info; }
+    .badge-warning { @apply bg-warning/10 text-warning; }
+    .badge-danger { @apply bg-danger/10 text-danger; }
+    .btn-outline-info { @apply border border-info/40 bg-info/5 text-info hover:bg-info/10; }
+    .btn-outline-danger { @apply border border-danger/40 bg-danger/5 text-danger hover:bg-danger/10; }
+    .btn-outline-success { @apply border border-brand/40 bg-brand/5 text-brand hover:bg-brand/10; }
+    .filter-bar { @apply mb-5 flex flex-wrap items-end gap-3; }
+    .badge-outline-info { @apply border border-info/40 bg-info/5 text-info; }
+    .badge-owner { @apply border border-warning/50 bg-warning/10 text-warning; }
+    .tag { @apply inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.04] px-3 py-1 text-[11px] font-bold text-fg; }
+    .avatar-xs { @apply flex h-5 w-5 items-center justify-center rounded-full bg-info text-[9px] font-extrabold text-black; }
+    .icon-btn { @apply inline-flex h-8 w-8 items-center justify-center rounded-lg text-xs transition duration-200; }
+    .icon-btn-cyan { @apply bg-cyan/15 text-cyan hover:bg-cyan/30; }
+    .icon-btn-info { @apply bg-info/15 text-info hover:bg-info/30; }
+    .icon-btn-warning { @apply bg-warning/15 text-warning hover:bg-warning/30; }
+    .icon-btn-accent { @apply bg-accent/15 text-accent hover:bg-accent/30; }
+    .icon-btn-orange { @apply bg-orange/15 text-orange hover:bg-orange/30; }
+    .icon-btn-danger { @apply bg-danger/15 text-danger hover:bg-danger/30; }
+    .icon-btn-success { @apply bg-brand/15 text-brand hover:bg-brand/30; }
+    .icon-btn:disabled { @apply cursor-not-allowed opacity-40; }
+    .pill { @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white/[0.03] px-3 py-1.5 text-xs text-muted transition hover:text-fg; }
+    .pill-radio:checked + .pill { @apply border-brand/40 bg-brand/15 font-bold text-brand; }
+    .pill-radio:focus-visible + .pill { @apply ring-2 ring-brand/30; }
+    .progress { @apply h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]; }
+    .badge-neutral { @apply bg-white/[0.06] text-fg; }
+    .menu-item { @apply flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted transition hover:bg-white/[0.06] hover:text-fg; }
+    .inline-input { @apply w-72 max-w-full border-0 border-b border-transparent bg-transparent pb-0.5 text-xl font-extrabold text-fg transition focus:border-brand/40 focus:outline-none; }
+    .modal { @apply m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto rounded-2xl border border-line bg-base p-0 text-fg shadow-2xl shadow-black/60; }
+    .modal::backdrop { background: rgb(0 0 0 / .72); backdrop-filter: blur(3px); }
+    .segmented { @apply inline-flex rounded-xl border border-line bg-white/[0.03] p-1; }
+    .segmented-item { @apply inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold text-muted transition hover:text-fg; }
+    .segmented-item-active { @apply bg-brand text-black hover:text-black; }
+    .dropzone { @apply flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line bg-white/[0.02] px-6 py-10 text-center text-sm text-muted transition hover:border-brand/40 hover:text-fg; }
+    .check-row { @apply flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-white/[0.02] px-3 py-2.5 text-sm text-muted transition hover:text-fg; }
+
+    /* App-level component classes shared by every Blade view. */
+    .app-sidebar { @apply fixed inset-y-0 right-0 z-50 flex w-[276px] flex-col border-l border-white/[0.07] bg-[#0d1215] text-fg transition-transform duration-200; }
+    .app-main { @apply min-h-screen lg:mr-[276px]; }
+    .app-topbar { @apply sticky top-0 z-30 min-h-[76px] border-b border-line bg-base/90 backdrop-blur-xl; }
+    .app-content { @apply mx-auto w-full max-w-[1600px] p-4 sm:p-6 xl:p-8; }
+    .app-footer { @apply border-t border-line px-5 py-4 text-[10px] text-dim; }
+    .app-overlay { @apply fixed inset-0 z-40 hidden bg-black/70 backdrop-blur-sm; }
+    .app-overlay.is-visible { @apply block; }
+    .nav-scroll { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / .12) transparent; }
+    .nav-link { @apply flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-[12px] font-semibold text-[#91a099] transition hover:bg-white/[0.045] hover:text-white; }
+    .nav-link.active { @apply bg-brand/10 text-brand ring-1 ring-inset ring-brand/10; }
+    .nav-icon { @apply grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.035] text-[13px] text-current; }
+    .nav-link.active .nav-icon { @apply bg-brand/10; }
+    .eyebrow { @apply text-[10px] font-extrabold tracking-[.16em] text-brand uppercase; }
+    .page-title { @apply text-xl font-black leading-tight text-fg sm:text-2xl; }
+    .page-subtitle { @apply mt-2 max-w-3xl text-xs leading-6 text-muted; }
+    .app-card { @apply overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_12px_35px_rgba(0,0,0,.10)]; }
+    .app-card-header { @apply flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4; }
+    .app-card-body { @apply p-5; }
+    .app-stat { @apply rounded-2xl border border-line bg-surface p-5; }
+    .app-stat-label { @apply text-[11px] font-bold text-muted; }
+    .app-stat-value { @apply text-2xl font-black tracking-tight text-fg; }
+    .app-stat-icon { @apply grid h-11 w-11 shrink-0 place-items-center rounded-xl border text-base; }
+    .stat-tone-green { @apply border-brand/20 bg-brand/10 text-brand; }
+    .stat-tone-blue { @apply border-info/20 bg-info/10 text-info; }
+    .stat-tone-orange { @apply border-orange/20 bg-orange/10 text-orange; }
+    .stat-tone-purple { @apply border-accent/20 bg-accent/10 text-accent; }
+    .stat-tone-red { @apply border-danger/20 bg-danger/10 text-danger; }
+    .app-help { @apply mt-1 block text-[10px] leading-5 text-muted; }
+    .app-btn { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-[11px] font-extrabold transition duration-200 disabled:cursor-not-allowed disabled:opacity-40; }
+    .app-btn-primary { @apply bg-brand text-black hover:bg-brand/85; }
+    .app-btn-secondary { @apply border-line bg-white/[0.04] text-fg hover:bg-white/[0.08]; }
+    .app-btn-danger { @apply border-danger/20 bg-danger/10 text-danger hover:bg-danger/20; }
+    .app-btn-ghost { @apply bg-transparent text-muted hover:bg-white/[0.05] hover:text-fg; }
+    .app-input { @apply min-h-10 w-full rounded-xl border border-line bg-white/[0.035] px-3 py-2.5 text-xs text-fg placeholder:text-dim outline-none transition focus:border-brand/40 focus:ring-2 focus:ring-brand/10; }
+    .app-label { @apply mb-2 block text-[11px] font-bold text-muted; }
+    .app-table { @apply w-full text-right text-xs; }
+    .app-table thead { @apply bg-white/[0.025]; }
+    .app-table th { @apply whitespace-nowrap border-b border-line px-4 py-3 text-[10px] font-extrabold text-dim; }
+    .app-table td { @apply border-b border-line px-4 py-3 align-middle text-muted; }
+    .app-table tbody tr { @apply transition hover:bg-white/[0.025]; }
+    .app-table tbody tr:last-child td { @apply border-b-0; }
+    .app-empty { @apply flex min-h-44 flex-col items-center justify-center px-5 py-10 text-center; }
+    .app-empty-icon { @apply mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-line bg-white/[0.03] text-lg text-muted; }
+    .app-badge { @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-[10px] font-extrabold; }
+    .app-badge-green { @apply bg-brand/10 text-brand; }
+    .app-badge-yellow { @apply bg-warning/10 text-warning; }
+    .app-badge-red { @apply bg-danger/10 text-danger; }
+    .app-badge-blue { @apply bg-info/10 text-info; }
+    .app-badge-gray { @apply bg-white/[0.06] text-muted; }
+    .app-flash { @apply mb-5 flex items-start gap-3 rounded-xl border px-4 py-3 text-xs leading-6; }
+    .app-flash-success { @apply border-brand/20 bg-brand/10 text-brand; }
+    .app-flash-error { @apply border-danger/20 bg-danger/10 text-danger; }
+    .app-flash-info { @apply border-warning/20 bg-warning/10 text-warning; }
+    .auth-grid { background: radial-gradient(ellipse at top, rgb(0 255 102 / .09), transparent 55%), var(--color-base); }
+    .auth-card { @apply border border-line bg-surface shadow-2xl shadow-black/30; }
+    .num { font-variant-numeric: tabular-nums; }
+    .mono { @apply font-mono; }
+}
+
+@media (max-width: 1023px) {
+    .app-sidebar { transform: translateX(105%); }
+    .app-sidebar.is-open { transform: translateX(0); }
+    .app-main { margin-right: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

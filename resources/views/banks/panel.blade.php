@@ -1,0 +1,7 @@
+@extends('layouts.app')
+@section('title', 'لوحة البنك')
+@section('content')
+<x-page-header title="لوحة البنك" subtitle="اختر المؤسسة لمراجعة المحافظ والعمليات المرتبطة بها." eyebrow="المؤسسات" icon="fa-building-columns" />
+@if(isset($bank))<x-bank-header :bank="$bank" subtitle="مركز إدارة البنك"/>@endif
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"><x-hub-tile title="قائمة البنوك" description="عرض المؤسسات البنكية المسجلة." icon="fa-building-columns" href="{{ \Illuminate\Support\Facades\Route::has('banks.index') ? route('banks.index') : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.index')"/><x-hub-tile title="توزيع المحافظ" description="متابعة إسناد القضايا لفريق التحصيل." icon="fa-diagram-project" href="{{ \Illuminate\Support\Facades\Route::has('banks.distribution.index') ? route('banks.distribution.index') : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.distribution.index')"/><x-hub-tile title="استيراد البيانات" description="رفع ملف محفظة جديد ومتابعة نتيجة المعالجة." icon="fa-file-import" href="{{ \Illuminate\Support\Facades\Route::has('banks.scope.import') ? route('banks.scope.import') : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.scope.import')"/><x-hub-tile title="تقارير التحصيل" description="مراجعة التقارير اليومية للمؤسسة." icon="fa-calendar-check" href="{{ \Illuminate\Support\Facades\Route::has('banks.dcr.index') ? route('banks.dcr.index') : '#' }}" :available="\Illuminate\Support\Facades\Route::has('banks.dcr.index')"/></div>
+@endsection

@@ -1,0 +1,2 @@
+@props(['title' => 'لا توجد بيانات لعرضها', 'description' => 'ستظهر البيانات هنا بمجرد توفرها.', 'icon' => 'fa-inbox'])
+<div class="app-empty"><div class="app-empty-icon"><i class="fa-solid {{ $icon }}" aria-hidden="true"></i></div><p class="text-xs font-extrabold text-fg">{{ $title }}</p><p class="mx-auto mt-1 max-w-sm text-[11px] leading-6 text-muted">{{ $description }}</p>@isset($action)<div class="mt-4">{{ $action }}</div>@endisset</div>

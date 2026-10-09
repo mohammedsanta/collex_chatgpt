@@ -1,0 +1,3 @@
+@props(['label', 'value', 'icon' => 'fa-chart-simple', 'color' => 'green', 'hint' => null])
+@php($tone = match($color) { 'green' => 'stat-tone-green', 'blue' => 'stat-tone-blue', 'orange' => 'stat-tone-orange', 'purple' => 'stat-tone-purple', 'red' => 'stat-tone-red', default => 'stat-tone-green' })
+<div class="app-stat"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="app-stat-label">{{ $label }}</p><p class="app-stat-value mt-2 break-words">{{ $value }}</p>@if($hint)<p class="mt-2 text-[10px] leading-5 text-dim">{{ $hint }}</p>@endif</div><span class="app-stat-icon {{ $tone }}"><i class="fa-solid {{ $icon }}"></i></span></div></div>

@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title', $company->name ?? 'تفاصيل شركة التقسيط')
+@section('content')
+<x-page-header :title="$company->name ?? 'تفاصيل شركة التقسيط'" subtitle="البيانات الأساسية وحالة المؤسسة." eyebrow="شركات التقسيط / التفاصيل" icon="fa-shop"><x-slot:actions>@if(\Illuminate\Support\Facades\Route::has('installment-companies.edit'))<a href="{{ route('installment-companies.edit',$company) }}" class="app-btn app-btn-primary"><i class="fa-solid fa-pen"></i> تعديل</a>@endif</x-slot:actions></x-page-header>
+<x-panel title="بيانات الشركة" icon="fa-circle-info"><dl class="grid gap-4 sm:grid-cols-2"><div><dt class="text-[10px] text-dim">اسم الشركة</dt><dd class="mt-1 text-xs font-extrabold">{{ $company->name ?? '—' }}</dd></div><div><dt class="text-[10px] text-dim">الكود</dt><dd class="mt-1 font-mono text-xs">{{ $company->code ?? '—' }}</dd></div><div><dt class="text-[10px] text-dim">القطاع</dt><dd class="mt-1 text-xs">{{ $company->sector ?? '—' }}</dd></div><div><dt class="text-[10px] text-dim">الحالة</dt><dd class="mt-1"><x-status-badge :status="($company->is_active ?? false) ? 'active' : 'inactive'"/></dd></div><div class="sm:col-span-2"><dt class="text-[10px] text-dim">ملاحظات</dt><dd class="mt-1 whitespace-pre-line text-xs leading-6">{{ $company->notes ?? '—' }}</dd></div></dl></x-panel>
+@endsection

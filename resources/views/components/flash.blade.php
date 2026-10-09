@@ -1,0 +1,5 @@
+@if(session('status'))<div class="app-flash app-flash-success" role="status"><i class="fa-solid fa-circle-check mt-1"></i><div>{{ session('status') }}</div></div>@endif
+@if(session('success'))<div class="app-flash app-flash-success" role="status"><i class="fa-solid fa-circle-check mt-1"></i><div>{{ session('success') }}</div></div>@endif
+@if(session('error'))<div class="app-flash app-flash-error" role="alert"><i class="fa-solid fa-circle-exclamation mt-1"></i><div>{{ session('error') }}</div></div>@endif
+@if(session('warning'))<div class="app-flash app-flash-info" role="status"><i class="fa-solid fa-triangle-exclamation mt-1"></i><div>{{ session('warning') }}</div></div>@endif
+@if($errors->any())<div class="app-flash app-flash-error" role="alert"><i class="fa-solid fa-circle-exclamation mt-1"></i><div><p class="mb-1 font-extrabold">يرجى مراجعة البيانات التالية:</p><ul class="list-inside list-disc space-y-1">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div></div>@endif

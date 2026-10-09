@@ -1,0 +1,2 @@
+@props(['title', 'subtitle' => null, 'icon' => 'fa-list'])
+<section class="app-card overflow-hidden"><header class="app-card-header"><div class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-xl bg-brand/10 text-brand"><i class="fa-solid {{ $icon }}"></i></span><div><h2 class="text-xs font-extrabold text-fg">{{ $title }}</h2>@if($subtitle)<p class="mt-1 text-[10px] text-dim">{{ $subtitle }}</p>@endif</div></div>@isset($actions)<div>{{ $actions }}</div>@endisset</header><div class="app-card-body">{{ $slot }}</div></section>

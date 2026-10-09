@@ -1,0 +1,2 @@
+@props(['client' => null, 'label' => 'العميل'])
+<div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-xs font-extrabold text-brand">{{ mb_strtoupper(mb_substr($client?->name ?? '؟', 0, 1)) }}</span><div><p class="text-xs font-extrabold text-fg">{{ $client?->name ?? 'غير محدد' }}</p><p class="mt-1 text-[10px] text-dim">{{ $label }} · {{ $client?->code ?? '—' }}</p></div></div>
