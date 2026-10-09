@@ -36,6 +36,7 @@ use App\Http\Controllers\Employees\UserSupervisorController;
 use App\Http\Controllers\Employees\UserRoleController;
 use App\Http\Controllers\Employees\UserPermissionController;
 use App\Http\Controllers\Employees\RolePermissionController;
+use App\Http\Controllers\Institutions\BankDcrController;
 use App\Http\Controllers\Institutions\BankWorkspaceController;
 use App\Http\Controllers\Notifications\NotificationController;
 use App\Http\Controllers\Notifications\NotificationReadAllController;
@@ -318,9 +319,17 @@ Route::middleware(['auth', 'active'])->group(function (): void {
                 ->name('complaints.show');
 
             // Daily Collection Reports
-            Route::get('/{bank}/dcr', [BankWorkspaceController::class, 'dcr'])
+            Route::get('/{bank}/dcr', [BankDcrController::class, 'index'])
                 ->whereNumber('bank')
                 ->name('dcr.index');
+
+            Route::get('/{bank}/dcr/create', [BankDcrController::class, 'create'])
+                ->whereNumber('bank')
+                ->name('dcr.create');
+
+            Route::post('/{bank}/dcr', [BankDcrController::class, 'store'])
+                ->whereNumber('bank')
+                ->name('dcr.store');
         });
 
     /* Installment companies */

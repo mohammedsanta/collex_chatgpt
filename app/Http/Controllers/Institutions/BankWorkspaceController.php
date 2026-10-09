@@ -14,6 +14,7 @@ use App\Domain\Loans\Models\DebtCase;
 use App\Domain\Loans\Models\Portfolio;
 use App\Domain\Reports\Models\DailyCollectionReport;
 use App\Domain\Reports\Models\MonthlyArchive;
+use App\Domain\Reports\Queries\GetMonthlyArchivesByBank;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Loans\CreateDebtCaseRequest;
 use Illuminate\Http\Request;
@@ -204,19 +205,83 @@ public function importScope(Bank $bank): View
         return view('banks.scope.edit', compact('bank', 'portfolios'));
     }
 
-    public function archives(Bank $bank): View
-    {
-        $archives = MonthlyArchive::query()
-            ->whereHas('bank', fn ($query) => $query->whereKey($bank->id))
-            ->latest('id')
-            ->paginate(15);
+    public function archives(
+        Request $request,
+        Bank $bank,
+        GetMonthlyArchivesByBank $getArchives
+    ): View {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+        ]);
 
-        return view('banks.archives.index', compact('bank', 'archives'));
+        $search = trim((string) ($filters['search'] ?? ''));
+        $year = $filters['year'] ?? null;
+        $month = $filters['month'] ?? null;
+
+        // Only retrieve archive records belonging to this bank.
+        $query = $getArchives->execute((int) $bank->id);
+
+        $query
+            ->when($year, fn ($q) => $q->where('year', $year))
+            ->when($month, fn ($q) => $q->where('month', $month))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($records) use ($search) {
+                    $records
+                        ->where('year', 'like', "%{$search}%")
+                        ->orWhere('month', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%")
+                        ->orWhereHas('portfolio', function ($portfolio) use ($search) {
+                            $portfolio->where('name', 'like', "%{$search}%");
+                        });
+                });
+            });
+
+        $archives = $query
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->paginate(15)
+            ->withQueryString();
+
+        // Summary cards show totals for all archive records of this bank,
+        // independently of the selected filters.
+        $summary = \App\Domain\Reports\Models\MonthlyArchive::query()
+            ->where('bank_id', $bank->id);
+
+        $stats = [
+            'archives_count' => (clone $summary)->count(),
+            'cases_count' => (int) (clone $summary)->sum('cases_count'),
+            'total_debt' => (float) (clone $summary)->sum('total_debt'),
+            'collected_amount' => (float) (clone $summary)->sum('collected_amount'),
+        ];
+
+        $years = \App\Domain\Reports\Models\MonthlyArchive::query()
+            ->where('bank_id', $bank->id)
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year');
+
+        return view('banks.archives.index', compact(
+            'bank',
+            'archives',
+            'stats',
+            'years',
+            'search',
+            'year',
+            'month',
+        ));
     }
 
     public function archive(Bank $bank, MonthlyArchive $archive): View
     {
         abort_unless((int) $archive->bank_id === (int) $bank->id, 404);
+
+        $archive->load([
+            'bank',
+            'portfolio',
+            'archivedBy',
+        ]);
 
         return view('banks.archives.show', compact('bank', 'archive'));
     }
