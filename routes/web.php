@@ -91,6 +91,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::post('/clients/{client}/restore', [ClientController::class, 'restore'])
         ->name('clients.restore');
 
+    Route::get('/clients/{client}', [ClientController::class, 'show'])
+    ->whereNumber('client')
+    ->name('clients.show');
+
     /* Payments: static routes must be registered before /payments/{payment}. */
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/confirmations', [PaymentController::class, 'confirmations'])

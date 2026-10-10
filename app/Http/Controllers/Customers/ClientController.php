@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Customers;
 
 use App\Domain\Customers\Actions\CreateClient;
 use App\Domain\Customers\Actions\DeleteClient;
+use App\Domain\Customers\Actions\GetClientDetails;
 use App\Domain\Customers\Actions\RestoreClient;
 use App\Domain\Customers\Actions\UpdateClient;
 use App\Domain\Customers\Models\Client;
@@ -42,11 +43,16 @@ final class ClientController extends Controller
         return $request->expectsJson() ? $client : redirect()->route('clients.show', $client)->with('status', 'تم إنشاء العميل بنجاح.');
     }
 
-    public function show(Client $client): View
-    {
+        
+        public function show(
+            Client $client,
+            GetClientDetails $action
+            ) {
         $this->authorize('view', $client);
-        $client->load(['governorate', 'phones', 'debtCases']);
-        return view('clients.show', compact('client'));
+        return view(
+            'clients.show',
+            $action->execute($client)
+        );
     }
 
     public function edit(Client $client): View

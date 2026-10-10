@@ -495,7 +495,7 @@
 
             <span>
                 <span class="block text-base font-bold tracking-wide text-white">
-                    كولكس <span class="text-[#00ff66]">Collex</span>
+                    الريادة <span class="text-[#00ff66]">Collex</span>
                 </span>
                 <span class="mt-0.5 block text-[10px] text-[#64707c]">
                     نظام إدارة التحصيل
