@@ -38,6 +38,7 @@ use App\Http\Controllers\Employees\UserPermissionController;
 use App\Http\Controllers\Employees\RolePermissionController;
 use App\Http\Controllers\Institutions\BankDcrController;
 use App\Http\Controllers\Institutions\BankWorkspaceController;
+use App\Http\Controllers\Institutions\LoanTypeStatusController;
 use App\Http\Controllers\Notifications\NotificationController;
 use App\Http\Controllers\Notifications\NotificationReadAllController;
 use Illuminate\Support\Facades\Route;
@@ -110,7 +111,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->name('payments.reject');
 
     /* Loans and cases */
-    Route::view('/loans', 'loans.index')->name('loans.index');
+    Route::get('/loans', [DebtCaseController::class, 'index'])->name('loans.index');
     Route::view('/loans/create', 'loans.create')->name('loans.create');
     Route::post('/loans', [DebtCaseController::class, 'store'])->name('loans.store');
     Route::view('/loans/{debtCase}', 'loans.show')->whereNumber('debtCase')->name('loans.show');
@@ -461,8 +462,18 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     /* Lookup/settings pages */
-    Route::view('/loan-types', 'loan-types.index')->name('loan-types.index');
-    Route::view('/loan-types/create', 'loan-types.create')->name('loan-types.create');
+    Route::resource('loan-types', LoanTypeController::class)
+        ->except(['show']);
+
+    Route::post(
+        '/loan-types/{loanType}/activate',
+        [LoanTypeStatusController::class, 'activate']
+    )->name('loan-types.activate');
+
+    Route::post(
+        '/loan-types/{loanType}/deactivate',
+        [LoanTypeStatusController::class, 'deactivate']
+)->name('loan-types.deactivate');    Route::view('/loan-types/create', 'loan-types.create')->name('loan-types.create');
     Route::post('/loan-types', [LoanTypeController::class, 'store'])->name('loan-types.store');
     Route::view('/loan-types/{loanType}/edit', 'loan-types.edit')->whereNumber('loanType')->name('loan-types.edit');
     Route::put('/loan-types/{loanType}', [LoanTypeController::class, 'update'])->whereNumber('loanType')->name('loan-types.update');
