@@ -27,4 +27,12 @@ final class MonthlyArchiveController extends Controller
     ): MonthlyArchive {
         return $action->execute($archive, request()->all());
     }
+
+    public function show(
+    \App\Domain\Reports\Models\MonthlyArchive $archive
+    ): \Illuminate\View\View {
+        $this->authorize('view', $archive);
+
+        return view('archives.show', compact('archive'));
+    }
 }

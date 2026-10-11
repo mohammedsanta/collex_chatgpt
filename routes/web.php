@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Activity\ActivityController;
+use App\Http\Controllers\Archives\ArchiveController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -479,22 +481,48 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
     /* Reports and archives */
     Route::view('/reports', 'reports.index')->name('reports.index');
-    Route::view('/reports/exports', 'reports.exports')->name('reports.exports');
     Route::view('/reports/{report}', 'reports.show')->whereNumber('report')->name('reports.show');
-    Route::post('/reports/exports', [ReportExportController::class, 'store'])->name('reports.exports.store');
-    Route::delete('/reports/exports/{export}', [ReportExportController::class, 'destroy'])->whereNumber('export')->name('reports.exports.destroy');
+
+    Route::get('/reports/exports', [
+    ReportExportController::class,
+    'index',
+])->name('reports.exports');
+
+Route::post('/reports/exports', [
+    ReportExportController::class,
+    'store',
+])->name('reports.exports.store');
+
+Route::get('/reports/exports/{export}/download', [
+    ReportExportController::class,
+    'download',
+])->whereNumber('export')->name('reports.exports.download');
+
+Route::post('/reports/exports/{export}/retry', [
+    ReportExportController::class,
+    'retry',
+])->whereNumber('export')->name('reports.exports.retry');
+
+Route::delete('/reports/exports/{export}', [
+    ReportExportController::class,
+    'destroy',
+])->whereNumber('export')->name('reports.exports.destroy');
+
     Route::post('/daily-reports', [DailyCollectionReportController::class, 'store'])->name('daily-reports.store');
     Route::put('/daily-reports/{dailyReport}', [DailyCollectionReportController::class, 'update'])->whereNumber('dailyReport')->name('daily-reports.update');
     Route::delete('/daily-reports/{dailyReport}', [DailyCollectionReportController::class, 'destroy'])->whereNumber('dailyReport')->name('daily-reports.destroy');
     Route::post('/daily-reports/{dailyReport}/approve', [DailyCollectionReportStatusController::class, 'approve'])->whereNumber('dailyReport')->name('daily-reports.approve');
     Route::post('/daily-reports/{dailyReport}/reject', [DailyCollectionReportStatusController::class, 'reject'])->whereNumber('dailyReport')->name('daily-reports.reject');
-    Route::view('/archives', 'archives.index')->name('archives.index');
-    Route::view('/archives/{archive}', 'archives.show')->whereNumber('archive')->name('archives.show');
+        Route::get('/archives', [ArchiveController::class, 'index'])
+        ->name('archives.index');
+    Route::get('/archives/{archive}', [MonthlyArchiveController::class, 'show'])
+    ->whereNumber('archive')
+    ->name('archives.show');
     Route::post('/archives', [MonthlyArchiveController::class, 'store'])->name('archives.store');
     Route::put('/archives/{archive}', [MonthlyArchiveController::class, 'update'])->whereNumber('archive')->name('archives.update');
 
     /* Activity logs and notifications */
-    Route::view('/activity-logs', 'activity-logs.index')->name('activity-logs.index');
+    Route::get('/activity-logs', [ActivityController::class, 'index'])->name('activity-logs.index');
     Route::view('/notifications', 'notifications.index')->name('notifications.index');
     Route::post('/notifications/read-all', NotificationReadAllController::class)->name('notifications.read-all');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
@@ -530,5 +558,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+
+    
+
+
 
 });
