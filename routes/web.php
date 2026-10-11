@@ -27,15 +27,15 @@ use App\Http\Controllers\Reports\ReportExportController;
 use App\Http\Controllers\Reports\DailyCollectionReportController;
 use App\Http\Controllers\Reports\DailyCollectionReportStatusController;
 use App\Http\Controllers\Reports\MonthlyArchiveController;
-use App\Http\Controllers\Employees\UserController;
-use App\Http\Controllers\Employees\RoleController;
-use App\Http\Controllers\Employees\PermissionController;
-use App\Http\Controllers\Employees\UserBankController;
-use App\Http\Controllers\Employees\UserInstallmentCompanyController;
-use App\Http\Controllers\Employees\UserSupervisorController;
-use App\Http\Controllers\Employees\UserRoleController;
-use App\Http\Controllers\Employees\UserPermissionController;
-use App\Http\Controllers\Employees\RolePermissionController;
+use App\Http\Controllers\Users\UserController;
+use App\Http\Controllers\Users\RoleController;
+use App\Http\Controllers\Users\PermissionController;
+use App\Http\Controllers\Users\UserBankController;
+use App\Http\Controllers\Users\UserInstallmentCompanyController;
+use App\Http\Controllers\Users\UserSupervisorController;
+use App\Http\Controllers\Users\UserRoleController;
+use App\Http\Controllers\Users\UserPermissionController;
+use App\Http\Controllers\Users\RolePermissionController;
 use App\Http\Controllers\Institutions\BankDcrController;
 use App\Http\Controllers\Institutions\BankWorkspaceController;
 use App\Http\Controllers\Institutions\LoanTypeStatusController;
@@ -100,6 +100,17 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/confirmations', [PaymentController::class, 'confirmations'])
         ->name('payments.confirmations');
+
+    Route::post('/payments/{payment}/confirm', [
+        PaymentConfirmationController::class,
+        'confirm',
+    ])->name('payments.confirm');
+
+    Route::post('/payments/{payment}/reject', [
+        PaymentConfirmationController::class,
+        'reject',
+    ])->name('payments.reject');
+
     Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');
     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
@@ -110,6 +121,28 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::post('/payments/{payment}/reject', [PaymentConfirmationController::class, 'reject'])
         ->name('payments.reject');
 
+
+        // updated
+
+        Route::prefix('payments')->name('payments.')->group(function () {
+    // قائمة التحصيلات
+    Route::get('/', [PaymentController::class, 'index'])
+        ->name('index');
+
+    // تأكيد التحصيلات المعلقة
+    Route::get('/confirmations', [PaymentController::class, 'confirmations'])
+        ->name('confirmations');
+
+    // تأكيد عملية تحصيل
+    Route::post('/{payment}/confirm', [PaymentConfirmationController::class, 'confirm'])
+        ->name('confirm');
+
+    // رفض عملية تحصيل
+    Route::post('/{payment}/reject', [PaymentConfirmationController::class, 'reject'])
+        ->name('reject');
+});
+
+// updated
     /* Loans and cases */
     Route::get('/loans', [DebtCaseController::class, 'index'])->name('loans.index');
     Route::view('/loans/create', 'loans.create')->name('loans.create');
@@ -120,7 +153,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::delete('/loans/{debtCase}', [DebtCaseController::class, 'destroy'])->whereNumber('debtCase')->name('loans.destroy');
     Route::post('/loans/{debtCase}/restore', [DebtCaseController::class, 'restore'])->whereNumber('debtCase')->name('loans.restore');
 
-    Route::view('/portfolios', 'banks.distribution.index')->name('portfolios.index');
+    Route::get('/portfolios', [PortfolioController::class, 'index'])
+    ->name('portfolios.index');
+
+    // Route::view('/portfolios', 'banks.distribution.index')->name('portfolios.index');
     Route::post('/portfolios', [PortfolioController::class, 'store'])->name('portfolios.store');
     Route::put('/portfolios/{portfolio}', [PortfolioController::class, 'update'])->name('portfolios.update');
     Route::post('/portfolios/{portfolio}/activate', [PortfolioController::class, 'activate'])->name('portfolios.activate');
@@ -138,10 +174,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->whereNumber(['debtCase', 'assignment'])->name('loans.assignments.destroy');
 
     /* Promise to pay */
-    Route::view('/ptp', 'ptp.index')->name('ptp.index');
+    Route::get('/ptp', [PromiseToPayController::class, 'index'])
+        ->name('ptp.index');
     Route::view('/ptp/create', 'ptp.create')->name('ptp.create');
     Route::post('/ptp', [PromiseToPayController::class, 'store'])->name('ptp.store');
-    Route::view('/ptp/{promise}', 'banks.ptp.show')->whereNumber('promise')->name('ptp.show');
+    Route::get('/ptp/{promise}', [PromiseToPayController::class,'show',])
+    ->whereNumber('promise')
+    ->name('ptp.show');
+
     Route::view('/ptp/{promise}/edit', 'ptp.edit')->whereNumber('promise')->name('ptp.edit');
     Route::put('/ptp/{promise}', [PromiseToPayController::class, 'update'])->whereNumber('promise')->name('ptp.update');
     Route::delete('/ptp/{promise}', [PromiseToPayController::class, 'destroy'])->whereNumber('promise')->name('ptp.destroy');
@@ -213,6 +253,16 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('/{bank}/distribution', [BankWorkspaceController::class, 'distribution'])
                 ->whereNumber('bank')
                 ->name('distribution.index');
+            
+            Route::post('/banks/{bank}/distribution',[BankWorkspaceController::class, 'storePortfolio']
+            )->name('distribution.store');
+
+
+            Route::post(
+                '/banks/{bank}/distribution/{portfolio}/activate',
+                [BankWorkspaceController::class, 'activatePortfolio']
+            )->name('distribution.activate');
+
 
             Route::get('/{bank}/distribution/create', [BankWorkspaceController::class,'createPortfolio',])
                     ->whereNumber('bank')
@@ -347,17 +397,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::put('/installment-companies/{installmentCompany}', [InstallmentCompanyController::class, 'update'])->whereNumber('installmentCompany')->name('installment-companies.update');
     Route::delete('/installment-companies/{installmentCompany}', [InstallmentCompanyController::class, 'destroy'])->whereNumber('installmentCompany')->name('installment-companies.destroy');
 
-    /* Employees and users */
-
-    /* Employees and users */
-
-    Route::view('/employees', 'employees.index')
-        ->name('employees.index');
-
-    Route::view('/employees/{employee}', 'employees.show')
-        ->whereNumber('employee')
-        ->name('employees.show');
-
     /* Users CRUD */
     Route::get('/users', [UserController::class, 'index'])
         ->name('users.index');
@@ -473,19 +512,23 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::post(
         '/loan-types/{loanType}/deactivate',
         [LoanTypeStatusController::class, 'deactivate']
-)->name('loan-types.deactivate');    Route::view('/loan-types/create', 'loan-types.create')->name('loan-types.create');
+    )->name('loan-types.deactivate');
+    Route::view('/loan-types/create', 'loan-types.create')->name('loan-types.create');
+
+
     Route::post('/loan-types', [LoanTypeController::class, 'store'])->name('loan-types.store');
     Route::view('/loan-types/{loanType}/edit', 'loan-types.edit')->whereNumber('loanType')->name('loan-types.edit');
     Route::put('/loan-types/{loanType}', [LoanTypeController::class, 'update'])->whereNumber('loanType')->name('loan-types.update');
     Route::delete('/loan-types/{loanType}', [LoanTypeController::class, 'destroy'])->whereNumber('loanType')->name('loan-types.destroy');
 
-    Route::view('/governorates', 'governorates.index')->name('governorates.index');
+    Route::get('/governorates', [GovernorateController::class, 'index'])->name('governorates.index');
     Route::view('/governorates/create', 'governorates.create')->name('governorates.create');
     Route::post('/governorates', [GovernorateController::class, 'store'])->name('governorates.store');
-    Route::view('/governorates/{governorate}/edit', 'governorates.edit')->whereNumber('governorate')->name('governorates.edit');
+    Route::get('/governorates/{governorate}/edit', [GovernorateController::class, 'edit'])->whereNumber('governorate')->name('governorates.edit');
     Route::put('/governorates/{governorate}', [GovernorateController::class, 'update'])->whereNumber('governorate')->name('governorates.update');
     Route::delete('/governorates/{governorate}', [GovernorateController::class, 'destroy'])->whereNumber('governorate')->name('governorates.destroy');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
 });

@@ -9,6 +9,7 @@ use App\Domain\Collections\Models\PromiseToPay;
 use App\Domain\Collections\Models\Visit;
 use App\Domain\Customers\Models\Client;
 use App\Domain\Institutions\Models\Bank;
+use App\Domain\Loans\Actions\ActivatePortfolio;
 use App\Domain\Loans\Actions\CreateDebtCase;
 use App\Domain\Loans\Models\DebtCase;
 use App\Domain\Loans\Models\Portfolio;
@@ -533,4 +534,81 @@ public function promises(Request $request, Bank $bank): View
             ->with('success', 'تم إنشاء حالة القرض بنجاح.');
     }
     
+    
+    public function storePortfolio(
+        \Illuminate\Http\Request $request,
+        Bank $bank
+    ): \Symfony\Component\HttpFoundation\RedirectResponse {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'period_year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'period_month' => ['required', 'integer', 'between:1,12'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        // منع تكرار محفظة البنك لنفس السنة والشهر.
+        $exists = $bank->portfolios()
+            ->where('period_year', $validated['period_year'])
+            ->where('period_month', $validated['period_month'])
+            ->exists();
+
+        if ($exists) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'period_month' => 'توجد محفظة لهذا البنك بالفعل في نفس الشهر والسنة.',
+            ]);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($bank, $validated) {
+                $bank->portfolios()->create([
+                    'name' => $validated['name'],
+                    'period_year' => $validated['period_year'],
+                    'period_month' => $validated['period_month'],
+                    'status' => 'draft',
+                    'cases_count' => 0,
+                    'total_debt' => 0,
+                    'created_by' => auth()->id(),
+                    'activated_at' => null,
+                    'archived_at' => null,
+                    'archived_by' => null,
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+            });
+        } catch (\Illuminate\Database\QueryException $exception) {
+            // حماية إضافية لو طلبان أنشآ المحفظة نفسها في وقت واحد.
+            if (
+                (string) $exception->getCode() === '23000'
+                && str_contains($exception->getMessage(), 'portfolios_bank_id_period_year_period_month_unique')
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'period_month' => 'توجد محفظة لهذا البنك بالفعل في نفس الشهر والسنة.',
+                ]);
+            }
+
+            throw $exception;
+        }
+
+        return redirect()
+            ->route('banks.distribution.index', ['bank' => $bank->id])
+            ->with('success', 'تم إنشاء المحفظة بنجاح.');
+    }
+
+    
+public function activatePortfolio(
+    Bank $bank,
+    Portfolio $portfolio,
+    ActivatePortfolio $action
+): RedirectResponse {
+    $portfolio = $bank->portfolios()
+        ->whereKey($portfolio->id)
+        ->firstOrFail();
+
+    $action->execute($portfolio);
+
+    return redirect()
+        ->route('banks.distribution.index', ['bank' => $bank->id])
+        ->with('success', 'تم تفعيل المحفظة بنجاح.');
+}
+
+
 }

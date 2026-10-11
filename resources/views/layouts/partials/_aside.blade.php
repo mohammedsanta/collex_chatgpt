@@ -220,7 +220,7 @@
                     'label' => 'تأكيد التحصيلات',
                     'icon' => 'fa-circle-check',
                     'color' => 'green',
-                    'route' => 'confirmations.index',
+                    'route' => 'payments.confirmations',
                     'pattern' => ['confirmations.*'],
                     'badge' => $pending,
                 ],
@@ -373,26 +373,6 @@
             'title' => 'الفريق والإدارة',
             'dot' => 'bg-[#a855f7]',
             'items' => [
-                [
-                    'label' => 'إدارة الموظفين',
-                    'icon' => 'fa-user-group',
-                    'color' => 'purple',
-                    'children' => [
-                        [
-                            'label' => 'قائمة الموظفين',
-                            'route' => 'employees.index',
-                            'pattern' => ['employees.index', 'employees.show', 'employees.edit'],
-                        ],
-                        [
-                            'label' => 'إضافة موظف',
-                            'route' => 'employees.create',
-                        ],
-                        [
-                            'label' => 'أداء الموظفين',
-                            'route' => 'employees.performance',
-                        ],
-                    ],
-                ],
                 [
                     'label' => 'إدارة المستخدمين',
                     'icon' => 'fa-user-gear',

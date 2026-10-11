@@ -9,6 +9,7 @@ use App\Domain\Payments\Actions\CreatePayment;
 use App\Domain\Payments\Actions\DeletePayment;
 use App\Domain\Payments\Actions\UpdatePayment;
 use App\Domain\Payments\Models\Payment;
+use App\Domain\Payments\Queries\GetPendingPayments;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payments\CreatePaymentRequest;
 use App\Http\Requests\Payments\UpdatePaymentRequest;
@@ -27,12 +28,65 @@ final class PaymentController extends Controller
         return view('payments.index', compact('payments'));
     }
 
-    public function confirmations(): View
-    {
+
+    public function confirmations(
+        Request $request,
+        GetPendingPayments $getPendingPayments
+    ): View {
         $this->authorize('viewAny', Payment::class);
-        $payments = Payment::query()->with(['debtCase.client', 'collector'])->where('status', 'pending')->latest()->paginate(25);
-        return view('payments.confirmations', compact('payments'));
+
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+
+        $pendingQuery = Payment::query()
+            ->where('status', 'pending');
+
+        $paymentsQuery = $getPendingPayments->execute()
+            ->when(
+                filled($filters['search'] ?? null),
+                function ($query) use ($filters): void {
+                    $search = trim($filters['search']);
+
+                    $query->where(function ($nestedQuery) use ($search): void {
+                        $nestedQuery
+                            ->where('receipt_number', 'like', "%{$search}%")
+                            ->orWhereHas('debtCase.client', function ($clientQuery) use ($search): void {
+                                $clientQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+                }
+            )
+            ->when(
+                filled($filters['date_from'] ?? null),
+                fn ($query) => $query->whereDate('paid_at', '>=', $filters['date_from'])
+            )
+            ->when(
+                filled($filters['date_to'] ?? null),
+                fn ($query) => $query->whereDate('paid_at', '<=', $filters['date_to'])
+            );
+
+        $statistics = [
+            'count' => (clone $pendingQuery)->count(),
+            'amount' => (clone $pendingQuery)->sum('amount'),
+            'today_count' => (clone $pendingQuery)
+                ->whereDate('paid_at', today())
+                ->count(),
+        ];
+
+        $payments = $paymentsQuery
+            ->orderBy('paid_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('payments.confirmations', compact(
+            'payments',
+            'statistics'
+        ));
     }
+
 
     public function create(): View
     {

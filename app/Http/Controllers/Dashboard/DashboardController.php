@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use App\Domain\Reports\Queries\GetDashboardStatistics;
+use App\Domain\Dashboard\Queries\GetDashboardOverview;
 use App\Http\Controllers\Controller;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 
 final class DashboardController extends Controller
 {
-    public function __invoke(
-        GetDashboardStatistics $getDashboardStatistics
-    ): View {
-        return view(
-            'dashboard.index',
-            $getDashboardStatistics->execute()
-        );
+    public function __invoke(GetDashboardOverview $query): View
+    {
+        return view('dashboard.index', $query->handle());
     }
 }

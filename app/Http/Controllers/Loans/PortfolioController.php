@@ -11,6 +11,8 @@ use App\Domain\Loans\Actions\DeletePortfolio;
 use App\Domain\Loans\Actions\RestorePortfolio;
 use App\Domain\Loans\Actions\UpdatePortfolio;
 use App\Domain\Loans\Models\Portfolio;
+use App\Domain\Loans\Queries\GetPortfolioStatistics;
+use App\Domain\Loans\Queries\SearchPortfolios;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Loans\CreatePortfolioRequest;
 use App\Http\Requests\Loans\UpdatePortfolioRequest;
@@ -18,6 +20,33 @@ use Illuminate\Http\Request;
 
 final class PortfolioController extends Controller
 {
+
+    public function index(
+        Request $request,
+        SearchPortfolios $searchPortfolios,
+        GetPortfolioStatistics $statistics
+    ){
+        $this->authorize('viewAny', Portfolio::class);
+
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'in:draft,active,archived'],
+        ]);
+
+        $portfolios = $searchPortfolios
+            ->execute(
+                $filters['search'] ?? null,
+                $filters['status'] ?? null
+            )
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('portfolios.index', [
+            'portfolios' => $portfolios,
+            'statistics' => $statistics->execute(),
+        ]);
+    }
+
     public function store(CreatePortfolioRequest $request, CreatePortfolio $action): Portfolio
     {
         return $action->execute($request->validated());

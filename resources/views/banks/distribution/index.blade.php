@@ -1,260 +1,161 @@
-```blade
+
 @extends('layouts.app')
 
-@section('title', 'توزيع المحافظ')
-
 @section('content')
-<div dir="rtl" class="space-y-6">
+<div class="mx-auto max-w-7xl space-y-6 px-4 py-8" dir="rtl">
 
-    <x-page-header
-        title="توزيع المحافظ"
-        subtitle="تابع محافظ البنك، وحجم الحالات والديون، وانتقل إلى توزيع الحالات على المحافظ."
-        eyebrow="البنوك / التوزيع"
-        icon="fa-layer-group"
-    >
-        <x-slot:actions>
+    {{-- Page Header --}}
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
             <a
-                href="{{ route('banks.distribution.create', ['bank' => $bank->id]) }}"
-                class="app-btn app-btn-primary"
+                href="{{ route('banks.index') }}"
+                class="text-sm text-gray-400 transition hover:text-lime-400"
             >
-                <i class="fa-solid fa-plus"></i>
-                إنشاء محفظة جديدة
+                ← العودة إلى البنوك
             </a>
 
+            <h1 class="mt-3 text-2xl font-bold text-white">
+                توزيع المحافظ
+            </h1>
+
+            <p class="mt-2 text-sm text-gray-400">
+                إدارة محافظ بنك {{ $bank->name }}
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
             <a
                 href="{{ route('banks.clients.assign', ['bank' => $bank->id]) }}"
-                class="app-btn app-btn-secondary"
+                class="rounded-xl border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-200 transition hover:bg-gray-800"
             >
-                <i class="fa-solid fa-arrows-left-right-to-line"></i>
                 توزيع الحالات
             </a>
-        </x-slot:actions>
-    </x-page-header>
 
-    {{-- Flash messages --}}
+            <a
+                href="{{ route('banks.distribution.create', ['bank' => $bank->id]) }}"
+                class="rounded-xl bg-lime-400 px-5 py-3 text-sm font-bold text-gray-950 transition hover:bg-lime-300"
+            >
+                + إنشاء محفظة
+            </a>
+        </div>
+    </div>
+
+    {{-- Success Message --}}
     @if (session('success'))
-        <div
-            role="status"
-            class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-emerald-300"
-        >
-            <i class="fa-solid fa-circle-check ml-2"></i>
+        <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-300">
             {{ session('success') }}
         </div>
     @endif
 
+    {{-- Error Message --}}
     @if (session('error'))
-        <div
-            role="alert"
-            class="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-300"
-        >
-            <i class="fa-solid fa-circle-exclamation ml-2"></i>
+        <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
             {{ session('error') }}
         </div>
     @endif
 
-    {{-- Bank information --}}
-    <section class="rounded-2xl border border-white/10 bg-[#121816] p-5 sm:p-6">
-        <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-                <p class="text-sm text-gray-400">البنك الحالي</p>
+    {{-- Validation Errors --}}
+    @if ($errors->any())
+        <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+            <p class="mb-2 font-semibold">تعذر تنفيذ العملية:</p>
 
-                <h2 class="mt-2 text-2xl font-bold text-white">
-                    {{ $bank->name }}
-                </h2>
-
-                <p class="mt-1 text-sm text-gray-500">
-                    كود البنك:
-                    <span class="font-medium text-gray-300">
-                        {{ $bank->code ?: '—' }}
-                    </span>
-                </p>
-            </div>
-
-            <div>
-                @if ($bank->is_active)
-                    <span class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
-                        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-                        بنك نشط
-                    </span>
-                @else
-                    <span class="inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-400/10 px-4 py-2 text-sm text-red-300">
-                        <span class="h-2 w-2 rounded-full bg-red-400"></span>
-                        بنك غير نشط
-                    </span>
-                @endif
-            </div>
+            <ul class="list-inside list-disc space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
-    </section>
+    @endif
 
-    {{-- Summary cards --}}
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    {{-- Statistics --}}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
-        {{-- Portfolios count --}}
-        <div class="rounded-2xl border border-white/10 bg-[#121816] p-5">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm text-gray-400">إجمالي المحافظ</p>
+        <div class="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+            <p class="text-sm text-gray-400">إجمالي المحافظ</p>
 
-                    <p class="mt-3 text-3xl font-bold text-white">
-                        {{ number_format($stats['portfolios_count']) }}
-                    </p>
-                </div>
-
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
-                    <i class="fa-solid fa-layer-group text-xl"></i>
-                </div>
-            </div>
-
-            <p class="mt-4 text-xs text-gray-500">
-                عدد المحافظ المسجلة لهذا البنك
+            <p class="mt-3 text-3xl font-bold text-white">
+                {{ number_format((int) ($stats['portfolios_count'] ?? 0)) }}
             </p>
         </div>
 
-        {{-- Debt cases count --}}
-        <div class="rounded-2xl border border-white/10 bg-[#121816] p-5">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm text-gray-400">إجمالي حالات المديونية</p>
+        <div class="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+            <p class="text-sm text-gray-400">إجمالي الحالات</p>
 
-                    <p class="mt-3 text-3xl font-bold text-white">
-                        {{ number_format($stats['cases_count']) }}
-                    </p>
-                </div>
-
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300">
-                    <i class="fa-solid fa-file-invoice-dollar text-xl"></i>
-                </div>
-            </div>
-
-            <p class="mt-4 text-xs text-gray-500">
-                مجموع الحالات الموجودة داخل محافظ البنك
+            <p class="mt-3 text-3xl font-bold text-white">
+                {{ number_format((int) ($stats['cases_count'] ?? 0)) }}
             </p>
         </div>
 
-        {{-- Total debt --}}
-        <div class="rounded-2xl border border-white/10 bg-[#121816] p-5 sm:col-span-2 xl:col-span-1">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm text-gray-400">إجمالي الديون</p>
+        <div class="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+            <p class="text-sm text-gray-400">إجمالي المديونية</p>
 
-                    <p class="mt-3 break-words text-2xl font-bold text-emerald-300">
-                        {{ number_format((float) $stats['total_debt'], 2) }}
-                    </p>
-                </div>
-
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-300">
-                    <i class="fa-solid fa-coins text-xl"></i>
-                </div>
-            </div>
-
-            <p class="mt-4 text-xs text-gray-500">
-                مجموع قيمة الديون المسجلة في الحالات
+            <p class="mt-3 text-3xl font-bold text-lime-400">
+                {{ number_format((float) ($stats['total_debt'] ?? 0), 2) }}
             </p>
         </div>
 
-    </section>
+    </div>
 
-    {{-- Portfolios table --}}
-    <x-panel
-        title="محافظ البنك"
-        subtitle="ابحث عن محفظة واستعرض الفترة وعدد الحالات وإجمالي المديونية."
-        icon="fa-table-list"
-    >
+    {{-- Portfolios Panel --}}
+    <div class="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900">
+
         {{-- Search --}}
-        <form
-            method="GET"
-            action="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
-            class="mb-5 flex flex-col gap-3 sm:flex-row"
-        >
-            <div class="relative min-w-0 flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-
+        <div class="border-b border-gray-800 p-5">
+            <form
+                action="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
+                method="GET"
+                class="flex flex-col gap-3 sm:flex-row"
+            >
                 <input
                     type="search"
                     name="search"
-                    value="{{ $search }}"
+                    value="{{ $search ?? request('search') }}"
                     placeholder="ابحث باسم المحفظة أو الحالة أو السنة..."
-                    aria-label="البحث في المحافظ"
-                    class="w-full rounded-xl border border-white/10 bg-[#0b0f0e] py-3 pr-11 pl-4 text-white outline-none placeholder:text-gray-500 focus:border-emerald-400"
+                    class="min-w-0 flex-1 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 outline-none transition focus:border-lime-400"
                 >
-            </div>
 
-            <button type="submit" class="app-btn app-btn-primary justify-center">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                بحث
-            </button>
-
-            @if ($search !== '')
-                <a
-                    href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
-                    class="app-btn app-btn-secondary justify-center"
+                <button
+                    type="submit"
+                    class="rounded-xl bg-lime-400 px-6 py-3 font-bold text-gray-950 transition hover:bg-lime-300"
                 >
-                    <i class="fa-solid fa-xmark"></i>
-                    مسح البحث
-                </a>
-            @endif
-        </form>
+                    بحث
+                </button>
 
-        {{-- Results summary --}}
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-            <p class="text-gray-400">
-                عدد النتائج:
-                <span class="font-semibold text-emerald-300">
-                    {{ number_format($portfolios->total()) }}
-                </span>
-            </p>
-
-            <p class="text-gray-500">
-                الصفحة {{ $portfolios->currentPage() }}
-                من {{ max(1, $portfolios->lastPage()) }}
-            </p>
+                @if (filled($search ?? request('search')))
+                    <a
+                        href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
+                        class="rounded-xl border border-gray-700 px-5 py-3 text-center text-gray-300 transition hover:bg-gray-800"
+                    >
+                        مسح البحث
+                    </a>
+                @endif
+            </form>
         </div>
 
         {{-- Table --}}
-        <div class="overflow-x-auto rounded-xl border border-white/5">
-            <table class="w-full min-w-[850px] text-right text-sm">
-                <thead class="bg-white/[0.025]">
-                    <tr class="border-b border-white/10 text-gray-400">
-                        <th scope="col" class="px-4 py-4 font-medium">المحفظة</th>
-                        <th scope="col" class="px-4 py-4 font-medium">الفترة</th>
-                        <th scope="col" class="px-4 py-4 font-medium">عدد الحالات</th>
-                        <th scope="col" class="px-4 py-4 font-medium">إجمالي الديون</th>
-                        <th scope="col" class="px-4 py-4 font-medium">الحالة</th>
-                        <th scope="col" class="px-4 py-4 font-medium">تاريخ الإنشاء</th>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[950px] text-right text-sm">
+
+                <thead class="border-b border-gray-800 bg-gray-800/50 text-gray-300">
+                    <tr>
+                        <th class="px-5 py-4 font-semibold">المحفظة</th>
+                        <th class="px-5 py-4 font-semibold">الفترة</th>
+                        <th class="px-5 py-4 font-semibold">عدد الحالات</th>
+                        <th class="px-5 py-4 font-semibold">إجمالي المديونية</th>
+                        <th class="px-5 py-4 font-semibold">الحالة</th>
+                        <th class="px-5 py-4 font-semibold">تاريخ الإنشاء</th>
+                        <th class="px-5 py-4 font-semibold">الإجراءات</th>
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-white/5">
+                <tbody class="divide-y divide-gray-800">
+
                     @forelse ($portfolios as $portfolio)
-                        @php
-                            $status = strtolower((string) $portfolio->status);
 
-                            [$statusLabel, $statusClass] = match ($status) {
-                                'active', 'activated' => [
-                                    'نشطة',
-                                    'bg-emerald-400/10 text-emerald-300 ring-emerald-400/20',
-                                ],
-                                'archived' => [
-                                    'مؤرشفة',
-                                    'bg-gray-400/10 text-gray-300 ring-gray-400/20',
-                                ],
-                                'draft' => [
-                                    'مسودة',
-                                    'bg-amber-400/10 text-amber-300 ring-amber-400/20',
-                                ],
-                                'pending' => [
-                                    'قيد الانتظار',
-                                    'bg-amber-400/10 text-amber-300 ring-amber-400/20',
-                                ],
-                                default => [
-                                    $portfolio->status ?: 'غير محدد',
-                                    'bg-sky-400/10 text-sky-300 ring-sky-400/20',
-                                ],
-                            };
-                        @endphp
+                        <tr class="transition hover:bg-gray-800/40">
 
-                        <tr class="transition hover:bg-white/[0.03]">
-                            <td class="px-4 py-4">
+                            {{-- Portfolio Name --}}
+                            <td class="px-5 py-4">
                                 <div class="font-semibold text-white">
                                     {{ $portfolio->name }}
                                 </div>
@@ -264,84 +165,143 @@
                                 </div>
                             </td>
 
-                            <td class="whitespace-nowrap px-4 py-4 text-gray-300">
-                                {{ $portfolio->period_year }}/{{ str_pad((string) $portfolio->period_month, 2, '0', STR_PAD_LEFT) }}
+                            {{-- Period --}}
+                            <td class="px-5 py-4 text-gray-300">
+                                {{ $portfolio->period_month }}/{{ $portfolio->period_year }}
                             </td>
 
-                            <td class="px-4 py-4">
-                                <span class="inline-flex rounded-lg bg-sky-400/10 px-3 py-1 text-sky-300">
-                                    {{ number_format($portfolio->debt_cases_count) }}
-                                </span>
+                            {{-- Cases Count --}}
+                            <td class="px-5 py-4 text-gray-300">
+                                {{ number_format((int) ($portfolio->debt_cases_count ?? 0)) }}
                             </td>
 
-                            <td class="whitespace-nowrap px-4 py-4 font-semibold text-emerald-300">
+                            {{-- Total Debt --}}
+                            <td class="px-5 py-4 font-medium text-white">
                                 {{ number_format((float) ($portfolio->debt_cases_sum_total_debt ?? 0), 2) }}
                             </td>
 
-                            <td class="px-4 py-4">
-                                <span class="inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs ring-1 {{ $statusClass }}">
-                                    {{ $statusLabel }}
-                                </span>
+                            {{-- Status --}}
+                            <td class="px-5 py-4">
+                                @switch($portfolio->status)
+
+                                    @case('draft')
+                                        <span class="inline-flex rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                                            مسودة
+                                        </span>
+                                        @break
+
+                                    @case('active')
+                                        <span class="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                                            مفعّلة
+                                        </span>
+                                        @break
+
+                                    @case('archived')
+                                        <span class="inline-flex rounded-full border border-gray-600 bg-gray-800 px-3 py-1 text-xs font-semibold text-gray-400">
+                                            مؤرشفة
+                                        </span>
+                                        @break
+
+                                    @default
+                                        <span class="inline-flex rounded-full border border-gray-700 bg-gray-800 px-3 py-1 text-xs text-gray-300">
+                                            {{ $portfolio->status }}
+                                        </span>
+
+                                @endswitch
                             </td>
 
-                            <td class="whitespace-nowrap px-4 py-4 text-gray-400">
+                            {{-- Created At --}}
+                            <td class="px-5 py-4 text-gray-400">
                                 {{ $portfolio->created_at?->format('Y-m-d') ?? '—' }}
                             </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-4 py-14 text-center">
-                                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-gray-500">
-                                    <i class="fa-solid fa-folder-open text-2xl"></i>
+
+                            {{-- Actions --}}
+                            <td class="px-5 py-4">
+                                <div class="flex flex-wrap items-center gap-2">
+
+                                    @if ($portfolio->status === 'draft')
+
+                                        <form
+                                            action="{{ route('banks.distribution.activate', [
+                                                'bank' => $bank->id,
+                                                'portfolio' => $portfolio->id,
+                                            ]) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('هل أنت متأكد من تفعيل المحفظة: {{ addslashes($portfolio->name) }}؟')"
+                                        >
+                                            @csrf
+
+                                            <button
+                                                type="submit"
+                                                class="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-400"
+                                            >
+                                                تفعيل المحفظة
+                                            </button>
+                                        </form>
+
+                                    @elseif ($portfolio->status === 'active')
+
+                                        <span class="text-xs text-emerald-400">
+                                            المحفظة مفعّلة
+                                        </span>
+
+                                    @elseif ($portfolio->status === 'archived')
+
+                                        <span class="text-xs text-gray-500">
+                                            المحفظة مؤرشفة
+                                        </span>
+
+                                    @endif
+
                                 </div>
+                            </td>
 
-                                <p class="mt-4 font-semibold text-gray-300">
-                                    @if ($search !== '')
-                                        لا توجد نتائج مطابقة
+                        </tr>
+
+                    @empty
+
+                        <tr>
+                            <td
+                                colspan="7"
+                                class="px-5 py-12 text-center"
+                            >
+                                <p class="text-base font-semibold text-gray-300">
+                                    لا توجد محافظ
+                                </p>
+
+                                <p class="mt-2 text-sm text-gray-500">
+                                    @if (filled($search ?? request('search')))
+                                        لم يتم العثور على محافظ تطابق البحث.
                                     @else
-                                        لا توجد محافظ لهذا البنك
+                                        لم يتم إنشاء أي محفظة لهذا البنك حتى الآن.
                                     @endif
                                 </p>
 
-                                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
-                                    @if ($search !== '')
-                                        جرّب البحث باستخدام اسم آخر أو امسح البحث لعرض جميع المحافظ.
-                                    @else
-                                        يمكنك إنشاء أول محفظة لهذا البنك من خلال زر إنشاء محفظة جديدة بالأعلى.
-                                    @endif
-                                </p>
-
-                                @if ($search !== '')
-                                    <a
-                                        href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
-                                        class="app-btn app-btn-secondary mt-4"
-                                    >
-                                        مسح البحث
-                                    </a>
-                                @else
+                                @if (! filled($search ?? request('search')))
                                     <a
                                         href="{{ route('banks.distribution.create', ['bank' => $bank->id]) }}"
-                                        class="app-btn app-btn-primary mt-4"
+                                        class="mt-4 inline-flex rounded-xl bg-lime-400 px-5 py-3 font-bold text-gray-950 transition hover:bg-lime-300"
                                     >
-                                        <i class="fa-solid fa-plus"></i>
                                         إنشاء أول محفظة
                                     </a>
                                 @endif
                             </td>
                         </tr>
+
                     @endforelse
+
                 </tbody>
             </table>
         </div>
 
         {{-- Pagination --}}
         @if ($portfolios->hasPages())
-            <div class="mt-5 border-t border-white/10 pt-5">
+            <div class="border-t border-gray-800 p-5">
                 {{ $portfolios->links() }}
             </div>
         @endif
-    </x-panel>
+
+    </div>
 
 </div>
 @endsection
-```

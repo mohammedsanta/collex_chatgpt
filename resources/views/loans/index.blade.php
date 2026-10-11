@@ -1,169 +1,246 @@
+
 @extends('layouts.app')
 
 @section('title', 'القروض | Collex')
+@section('topbar-title', 'إدارة القروض')
 
 @section('content')
-<div class="min-h-[70vh] space-y-6 rounded-2xl bg-slate-950 p-4 text-slate-100 md:p-6">
+    <x-page-header
+        title="إدارة القروض"
+        subtitle="متابعة ملفات القروض والمديونيات والتحصيل وحالة كل ملف."
+        eyebrow="القروض والتحصيل"
+        icon="fa-file-invoice-dollar"
+    >
+        <x-slot:actions>
+            <span class="app-badge app-badge-gray">
+                <i class="fa-solid fa-folder-open"></i>
+                {{ number_format($cases->total()) }} ملف
+            </span>
 
-    {{-- Page Header --}}
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <p class="text-sm text-emerald-400">COLLEX / الإدارة</p>
-            <h1 class="mt-1 text-2xl font-bold">القروض</h1>
-            <p class="mt-1 text-sm text-slate-400">
-                متابعة ملفات القروض والمديونيات والتحصيل.
-            </p>
+            <a href="{{ route('loans.create') }}" class="app-btn app-btn-primary">
+                <i class="fa-solid fa-plus"></i>
+                إضافة قرض
+            </a>
+        </x-slot:actions>
+    </x-page-header>
+
+    @php
+        $statistics = $statistics ?? [];
+
+        $loanStatusLabels = [
+            'active' => 'نشط',
+            'paid' => 'مسدد',
+            'overdue' => 'متأخر',
+            'closed' => 'مغلق',
+        ];
+
+        $loanStatusClasses = [
+            'active' => 'app-badge-blue',
+            'paid' => 'app-badge-green',
+            'overdue' => 'app-badge-red',
+            'closed' => 'app-badge-gray',
+        ];
+
+        $currentFilters = $filters ?? [];
+        $hasFilters = collect($currentFilters)->contains(
+            fn ($value) => filled($value)
+        );
+    @endphp
+
+    {{-- Flash messages --}}
+    @if (session('success'))
+        <div class="app-flash app-flash-success" role="status">
+            <i class="fa-solid fa-circle-check mt-1"></i>
+            <span>{{ session('success') }}</span>
         </div>
-    </div>
+    @endif
+
+    @if (session('error'))
+        <div class="app-flash app-flash-error" role="alert">
+            <i class="fa-solid fa-circle-exclamation mt-1"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
 
     {{-- Statistics --}}
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-stat-card
+            label="إجمالي القروض"
+            :value="number_format($statistics['total'] ?? 0)"
+            icon="fa-file-invoice-dollar"
+            color="blue"
+            hint="إجمالي الملفات المسجلة"
+        />
 
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p class="text-sm text-slate-400">إجمالي القروض</p>
-            <p class="mt-3 text-3xl font-bold num">
-                {{ number_format($statistics['total'] ?? 0) }}
-            </p>
-        </div>
+        <x-stat-card
+            label="القروض النشطة"
+            :value="number_format($statistics['active'] ?? 0)"
+            icon="fa-chart-line"
+            color="green"
+            hint="الملفات قيد المتابعة"
+        />
 
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p class="text-sm text-slate-400">القروض النشطة</p>
-            <p class="mt-3 text-3xl font-bold text-emerald-400 num">
-                {{ number_format($statistics['active'] ?? 0) }}
-            </p>
-        </div>
+        <x-stat-card
+            label="إجمالي المتأخرات"
+            :value="number_format((float) ($statistics['overdue'] ?? 0), 2)"
+            icon="fa-clock"
+            color="orange"
+            hint="المبالغ المتأخرة عن السداد"
+        />
 
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p class="text-sm text-slate-400">إجمالي المتأخرات</p>
-            <p class="mt-3 text-2xl font-bold text-rose-400 num">
-                {{ number_format((float) ($statistics['overdue'] ?? 0), 2) }}
-            </p>
-        </div>
-
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p class="text-sm text-slate-400">إجمالي المحصل</p>
-            <p class="mt-3 text-2xl font-bold text-emerald-400 num">
-                {{ number_format((float) ($statistics['collected'] ?? 0), 2) }}
-            </p>
-        </div>
-
+        <x-stat-card
+            label="إجمالي المحصل"
+            :value="number_format((float) ($statistics['collected'] ?? 0), 2)"
+            icon="fa-money-bill-transfer"
+            color="purple"
+            hint="إجمالي المبالغ المحصلة"
+        />
     </div>
 
-    {{-- Search & Filters --}}
-    <section class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    {{-- Search and filters --}}
+    <section class="app-card mb-5">
+        <div class="app-card-header">
+            <div class="flex items-center gap-3">
+                <span class="grid h-10 w-10 place-items-center rounded-xl border border-brand/15 bg-brand/10 text-brand">
+                    <i class="fa-solid fa-filter"></i>
+                </span>
 
-        <div class="mb-4">
-            <h2 class="font-semibold">البحث والتصفية</h2>
-            <p class="mt-1 text-sm text-slate-400">
-                ابحث عن قرض أو حدد البنك والحالة وموظف التحصيل.
-            </p>
+                <div>
+                    <h2 class="text-sm font-extrabold text-fg">البحث والتصفية</h2>
+                    <p class="mt-1 text-[11px] text-muted">
+                        حدد معايير البحث للوصول إلى ملف القرض المطلوب.
+                    </p>
+                </div>
+            </div>
+
+            @if ($hasFilters)
+                <span class="app-badge app-badge-blue">
+                    <i class="fa-solid fa-sliders"></i>
+                    توجد تصفية نشطة
+                </span>
+            @endif
         </div>
 
-        <form method="GET" action="{{ route('loans.index') }}"
-              class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div class="app-card-body">
+            <form method="GET" action="{{ route('loans.index') }}" class="space-y-5">
+                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div>
+                        <label for="loan-search" class="app-label">البحث</label>
 
-            <input
-                type="search"
-                name="search"
-                value="{{ $filters['search'] ?? '' }}"
-                placeholder="رقم القرض أو اسم العميل..."
-                class="rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
-            >
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-xs text-dim"></i>
 
-            <select
-                name="bank_id"
-                class="rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white focus:border-emerald-400 focus:outline-none"
-            >
-                <option value="">كل البنوك</option>
+                            <input
+                                id="loan-search"
+                                type="search"
+                                name="search"
+                                value="{{ $currentFilters['search'] ?? request('search', '') }}"
+                                placeholder="رقم القرض أو اسم العميل..."
+                                class="app-input pr-9"
+                            >
+                        </div>
+                    </div>
 
-                @foreach ($banks as $bank)
-                    <option
-                        value="{{ $bank->id }}"
-                        @selected((string) ($filters['bank_id'] ?? '') === (string) $bank->id)
-                    >
-                        {{ $bank->name }}
-                    </option>
-                @endforeach
-            </select>
+                    <div>
+                        <label for="bank-filter" class="app-label">البنك</label>
 
-            <select
-                name="status"
-                class="rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white focus:border-emerald-400 focus:outline-none"
-            >
-                <option value="">كل الحالات</option>
-                <option value="active" @selected(($filters['status'] ?? '') === 'active')>
-                    نشط
-                </option>
-                <option value="paid" @selected(($filters['status'] ?? '') === 'paid')>
-                    مسدد
-                </option>
-                <option value="overdue" @selected(($filters['status'] ?? '') === 'overdue')>
-                    متأخر
-                </option>
-            </select>
+                        <select id="bank-filter" name="bank_id" class="app-input">
+                            <option value="">كل البنوك</option>
 
-            <select
-                name="assignment"
-                class="rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white focus:border-emerald-400 focus:outline-none"
-            >
-                <option value="">كل ملفات الإسناد</option>
-                <option value="assigned" @selected(($filters['assignment'] ?? '') === 'assigned')>
-                    مسند لموظف
-                </option>
-                <option value="unassigned" @selected(($filters['assignment'] ?? '') === 'unassigned')>
-                    غير مسند
-                </option>
-            </select>
+                            @foreach ($banks as $bank)
+                                <option
+                                    value="{{ $bank->id }}"
+                                    @selected((string) ($currentFilters['bank_id'] ?? request('bank_id', '')) === (string) $bank->id)
+                                >
+                                    {{ $bank->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-            <div class="flex gap-2">
-                <button
-                    type="submit"
-                    class="flex-1 rounded-lg bg-emerald-400 px-4 py-3 font-bold text-slate-950 transition hover:bg-emerald-300"
-                >
-                    بحث
-                </button>
+                    <div>
+                        <label for="status-filter" class="app-label">حالة القرض</label>
 
-                <a
-                    href="{{ route('loans.index') }}"
-                    class="rounded-lg border border-slate-700 px-4 py-3 text-center transition hover:bg-slate-800"
-                >
-                    إعادة
-                </a>
-            </div>
+                        <select id="status-filter" name="status" class="app-input">
+                            <option value="">كل الحالات</option>
+                            <option value="active" @selected(($currentFilters['status'] ?? request('status', '')) === 'active')>نشط</option>
+                            <option value="paid" @selected(($currentFilters['status'] ?? request('status', '')) === 'paid')>مسدد</option>
+                            <option value="overdue" @selected(($currentFilters['status'] ?? request('status', '')) === 'overdue')>متأخر</option>
+                            <option value="closed" @selected(($currentFilters['status'] ?? request('status', '')) === 'closed')>مغلق</option>
+                        </select>
+                    </div>
 
-        </form>
+                    <div>
+                        <label for="assignment-filter" class="app-label">الإسناد</label>
+
+                        <select id="assignment-filter" name="assignment" class="app-input">
+                            <option value="">كل ملفات الإسناد</option>
+                            <option value="assigned" @selected(($currentFilters['assignment'] ?? request('assignment', '')) === 'assigned')>
+                                مسند لموظف
+                            </option>
+                            <option value="unassigned" @selected(($currentFilters['assignment'] ?? request('assignment', '')) === 'unassigned')>
+                                غير مسند
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
+                    <button type="submit" class="app-btn app-btn-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        بحث
+                    </button>
+
+                    <a href="{{ route('loans.index') }}" class="app-btn app-btn-secondary">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        إعادة تعيين
+                    </a>
+
+                    <span class="text-[11px] text-muted sm:mr-auto">
+                        النتائج:
+                        <span class="font-extrabold text-fg">{{ number_format($cases->total()) }}</span>
+                        ملف
+                    </span>
+                </div>
+            </form>
+        </div>
     </section>
 
-    {{-- Loans Table --}}
-    <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+    {{-- Loans table --}}
+    <section class="app-card">
+        <div class="app-card-header">
+            <div class="flex items-center gap-3">
+                <span class="grid h-10 w-10 place-items-center rounded-xl border border-brand/15 bg-brand/10 text-brand">
+                    <i class="fa-solid fa-table-list"></i>
+                </span>
 
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 p-5">
-            <div>
-                <h2 class="font-semibold">سجلات القروض</h2>
-                <p class="mt-1 text-sm text-slate-400">
-                    عدد النتائج: {{ number_format($cases->total()) }}
-                </p>
+                <div>
+                    <h2 class="text-sm font-extrabold text-fg">سجلات القروض</h2>
+                    <p class="mt-1 text-[11px] text-muted">
+                        بيانات العملاء والديون والتحصيل وحالة الملف.
+                    </p>
+                </div>
             </div>
 
-            <span class="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300">
-                {{ $cases->currentPage() }} / {{ $cases->lastPage() ?: 1 }}
+            <span class="app-badge app-badge-gray">
+                الصفحة {{ number_format($cases->currentPage()) }}
+                من {{ number_format(max(1, $cases->lastPage())) }}
             </span>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full text-right text-sm">
-
-                <thead class="bg-slate-800 text-slate-300">
+            <table class="app-table">
+                <thead>
                     <tr>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">رقم القرض</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">العميل</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">البنك</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">إجمالي الدين</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">المتأخرات</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">المحصل</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">أيام التأخير</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">موظف التحصيل</th>
-                        <th class="whitespace-nowrap px-4 py-3 font-semibold">الحالة</th>
+                        <th>رقم القرض</th>
+                        <th>العميل</th>
+                        <th>البنك</th>
+                        <th>إجمالي الدين</th>
+                        <th>المتأخرات</th>
+                        <th>المحصل</th>
+                        <th>أيام التأخير</th>
+                        <th>موظف التحصيل</th>
+                        <th>الحالة</th>
                     </tr>
                 </thead>
 
@@ -171,102 +248,208 @@
                     @forelse ($cases as $case)
                         @php
                             $status = strtolower((string) $case->status);
-
-                            $statusStyles = match ($status) {
-                                'active' => 'bg-sky-400/10 text-sky-400',
-                                'paid' => 'bg-emerald-400/10 text-emerald-400',
-                                'overdue' => 'bg-rose-400/10 text-rose-400',
-                                'closed' => 'bg-slate-700 text-slate-300',
-                                default => 'bg-amber-400/10 text-amber-400',
-                            };
-
-                            $statusLabels = [
-                                'active' => 'نشط',
-                                'paid' => 'مسدد',
-                                'overdue' => 'متأخر',
-                                'closed' => 'مغلق',
-                            ];
+                            $statusClass = $loanStatusClasses[$status] ?? 'app-badge-yellow';
+                            $statusLabel = $loanStatusLabels[$status] ?? str_replace('_', ' ', $status ?: 'غير محدد');
                         @endphp
 
-                        <tr class="border-t border-slate-800 transition hover:bg-slate-800/50">
-
-                            <td class="whitespace-nowrap px-4 py-4">
-                                <span class="font-semibold text-slate-100">
+                        <tr>
+                            <td>
+                                <span class="font-extrabold text-fg">
                                     {{ $case->loan_number ?: '—' }}
                                 </span>
-                                <p class="mt-1 text-xs text-slate-500">
-                                    #{{ $case->id }}
+                                <p class="mt-1 text-[10px] text-dim">
+                                    ID: {{ $case->id }}
                                 </p>
                             </td>
 
-                            <td class="whitespace-nowrap px-4 py-4">
-                                <span class="font-medium text-slate-200">
+                            <td>
+                                <span class="font-bold text-fg">
                                     {{ $case->client?->name ?? '—' }}
                                 </span>
 
                                 @if ($case->client?->national_id)
-                                    <p class="mt-1 text-xs text-slate-500 num">
+                                    <p class="mt-1 text-[10px] text-dim">
                                         {{ $case->client->national_id }}
                                     </p>
                                 @endif
                             </td>
 
-                            <td class="whitespace-nowrap px-4 py-4 text-slate-300">
-                                {{ $case->bank?->name ?? '—' }}
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4 num">
-                                {{ number_format((float) $case->total_debt, 2) }}
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4 num {{ (float) $case->overdue_amount > 0 ? 'text-rose-400' : 'text-slate-300' }}">
-                                {{ number_format((float) $case->overdue_amount, 2) }}
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4 text-emerald-400 num">
-                                {{ number_format((float) $case->collected_amount, 2) }}
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4 text-slate-300 num">
-                                {{ $case->dpd ?? 0 }}
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4 text-slate-300">
-                                {{ $case->assignedUser?->name ?? 'غير مسند' }}
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4">
-                                <span class="inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold {{ $statusStyles }}">
-                                    {{ $statusLabels[$status] ?? str_replace('_', ' ', $status ?: 'غير محدد') }}
+                            <td>
+                                <span class="text-xs text-muted">
+                                    {{ $case->bank?->name ?? '—' }}
                                 </span>
                             </td>
 
+                            <td>
+                                <span class="num whitespace-nowrap font-bold text-fg">
+                                    {{ number_format((float) $case->total_debt, 2) }}
+                                </span>
+                                <span class="text-[10px] text-dim">ج.م</span>
+                            </td>
+
+                            <td>
+                                <span class="num whitespace-nowrap font-bold {{ (float) $case->overdue_amount > 0 ? 'text-danger' : 'text-muted' }}">
+                                    {{ number_format((float) $case->overdue_amount, 2) }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="num whitespace-nowrap font-bold text-brand">
+                                    {{ number_format((float) $case->collected_amount, 2) }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="num font-bold {{ (int) ($case->dpd ?? 0) > 0 ? 'text-warning' : 'text-muted' }}">
+                                    {{ number_format((int) ($case->dpd ?? 0)) }}
+                                </span>
+                            </td>
+
+                            <td>
+                                @if ($case->assignedUser?->name)
+                                    <span class="inline-flex items-center gap-2 whitespace-nowrap text-xs text-fg">
+                                        <span class="grid h-7 w-7 place-items-center rounded-lg bg-white/[0.05] text-brand">
+                                            <i class="fa-solid fa-user text-[10px]"></i>
+                                        </span>
+                                        {{ $case->assignedUser->name }}
+                                    </span>
+                                @else
+                                    <span class="app-badge app-badge-gray">غير مسند</span>
+                                @endif
+                            </td>
+
+                            <td>
+                                <span class="app-badge {{ $statusClass }}">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                    {{ $statusLabel }}
+                                </span>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-12 text-center">
-                                <p class="font-medium text-slate-200">
-                                    لا توجد قروض مطابقة.
-                                </p>
-                                <p class="mt-2 text-xs text-slate-400">
-                                    جرّب تغيير كلمات البحث أو الفلاتر.
-                                </p>
+                            <td colspan="9" class="p-0">
+                                <div class="app-empty">
+                                    <span class="app-empty-icon">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                    </span>
+
+                                    <h3 class="text-sm font-extrabold text-fg">
+                                        لا توجد قروض مطابقة
+                                    </h3>
+
+                                    <p class="mt-2 max-w-sm text-xs leading-6 text-muted">
+                                        جرّب تغيير معايير البحث أو أضف قرضًا جديدًا.
+                                    </p>
+
+                                    <div class="mt-5 flex flex-wrap justify-center gap-2">
+                                        @if ($hasFilters)
+                                            <a href="{{ route('loans.index') }}" class="app-btn app-btn-secondary">
+                                                <i class="fa-solid fa-rotate-right"></i>
+                                                إعادة تعيين البحث
+                                            </a>
+                                        @endif
+
+                                        <a href="{{ route('loans.create') }}" class="app-btn app-btn-primary">
+                                            <i class="fa-solid fa-plus"></i>
+                                            إضافة قرض
+                                        </a>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
-
             </table>
         </div>
 
-        {{-- Pagination --}}
+        {{-- Styled pagination --}}
         @if ($cases->hasPages())
-            <div class="border-t border-slate-800 p-4">
-                {{ $cases->links() }}
+            @php
+                $currentPage = $cases->currentPage();
+                $lastPage = $cases->lastPage();
+                $startPage = max(1, $currentPage - 2);
+                $endPage = min($lastPage, $currentPage + 2);
+                $pagination = $cases->appends(request()->query());
+            @endphp
+
+            <div class="flex flex-col gap-4 border-t border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-[11px] text-muted">
+                    عرض
+                    <span class="font-extrabold text-fg">{{ number_format($cases->firstItem()) }}</span>
+                    إلى
+                    <span class="font-extrabold text-fg">{{ number_format($cases->lastItem()) }}</span>
+                    من
+                    <span class="font-extrabold text-fg">{{ number_format($cases->total()) }}</span>
+                    نتيجة
+                </p>
+
+                <nav aria-label="التنقل بين صفحات القروض" class="flex flex-wrap items-center gap-1.5">
+                    @if ($cases->onFirstPage())
+                        <span class="inline-flex h-9 items-center gap-2 rounded-xl border border-line bg-white/[0.02] px-3 text-xs text-dim opacity-50">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            السابق
+                        </span>
+                    @else
+                        <a href="{{ $pagination->previousPageUrl() }}"
+                           rel="prev"
+                           class="inline-flex h-9 items-center gap-2 rounded-xl border border-line bg-white/[0.03] px-3 text-xs font-bold text-muted transition hover:border-brand/30 hover:bg-brand/10 hover:text-brand">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            السابق
+                        </a>
+                    @endif
+
+                    @if ($startPage > 1)
+                        <a href="{{ $pagination->url(1) }}"
+                           class="inline-flex h-9 min-w-9 items-center justify-center rounded-xl border border-line bg-white/[0.03] px-3 text-xs font-bold text-muted hover:border-brand/30 hover:text-brand">
+                            1
+                        </a>
+
+                        @if ($startPage > 2)
+                            <span class="px-1 text-xs text-dim">…</span>
+                        @endif
+                    @endif
+
+                    @foreach (range($startPage, $endPage) as $page)
+                        @if ($page === $currentPage)
+                            <span aria-current="page"
+                                  class="inline-flex h-9 min-w-9 items-center justify-center rounded-xl border border-brand/30 bg-brand/10 px-3 text-xs font-extrabold text-brand">
+                                {{ $page }}
+                            </span>
+                        @else
+                            <a href="{{ $pagination->url($page) }}"
+                               aria-label="الصفحة {{ $page }}"
+                               class="inline-flex h-9 min-w-9 items-center justify-center rounded-xl border border-line bg-white/[0.03] px-3 text-xs font-bold text-muted transition hover:border-brand/30 hover:bg-brand/10 hover:text-brand">
+                                {{ $page }}
+                            </a>
+                        @endif
+                    @endforeach
+
+                    @if ($endPage < $lastPage)
+                        @if ($endPage < $lastPage - 1)
+                            <span class="px-1 text-xs text-dim">…</span>
+                        @endif
+
+                        <a href="{{ $pagination->url($lastPage) }}"
+                           class="inline-flex h-9 min-w-9 items-center justify-center rounded-xl border border-line bg-white/[0.03] px-3 text-xs font-bold text-muted hover:border-brand/30 hover:text-brand">
+                            {{ $lastPage }}
+                        </a>
+                    @endif
+
+                    @if ($cases->hasMorePages())
+                        <a href="{{ $pagination->nextPageUrl() }}"
+                           rel="next"
+                           class="inline-flex h-9 items-center gap-2 rounded-xl border border-line bg-white/[0.03] px-3 text-xs font-bold text-muted transition hover:border-brand/30 hover:bg-brand/10 hover:text-brand">
+                            التالي
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        </a>
+                    @else
+                        <span class="inline-flex h-9 items-center gap-2 rounded-xl border border-line bg-white/[0.02] px-3 text-xs text-dim opacity-50">
+                            التالي
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        </span>
+                    @endif
+                </nav>
             </div>
         @endif
-
     </section>
-
-</div>
 @endsection

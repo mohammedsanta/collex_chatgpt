@@ -15,7 +15,7 @@ final class CreateGovernorate
     {
         try {
             return DB::transaction(function () use ($data): Governorate {
-                return Governorate::create([
+                return Governorate::query()->create([
                     'name' => $data['name'],
                     'name_en' => $data['name_en'] ?? null,
                 ]);

@@ -18,6 +18,14 @@
                 <i class="fa-solid fa-plus"></i>
                 تسجيل وعد سداد
             </a>
+            <a
+                href="{{ route('ptp.show', $promise->id) }}"
+                class="app-btn app-btn-secondary !px-3 !py-2"
+                title="عرض التفاصيل"
+            >
+                <i class="fa-solid fa-eye"></i>
+                عرض
+            </a>
         </x-slot>
     </x-page-header>
 

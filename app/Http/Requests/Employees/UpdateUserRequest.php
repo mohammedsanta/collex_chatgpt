@@ -17,7 +17,7 @@ final class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes','required','string','max:255'], 'email' => ['sometimes','required','email:rfc','max:255', Rule::unique('users', 'email')->ignore($this->route('user')?->getKey())], 'phone' => ['sometimes','nullable','string','max:20', Rule::unique('users', 'phone')->ignore($this->route('user')?->getKey())], 'role_id' => ['sometimes','required','integer','exists:roles,id'], 'supervisor_id' => ['sometimes','nullable','integer','exists:users,id'], 'status' => ['sometimes', Rule::in(['active','inactive','suspended'])],
+            'name' => ['sometimes','required','string','max:255'], 'email' => ['sometimes','required','email:rfc','max:255', Rule::unique('users', 'email')->ignore($this->route('employee')?->getKey())], 'phone' => ['sometimes','nullable','string','max:20', Rule::unique('users', 'phone')->ignore($this->route('employee')?->getKey())], 'role_id' => ['sometimes','required','integer','exists:roles,id'], 'supervisor_id' => ['sometimes','nullable','integer','exists:users,id'], 'status' => ['sometimes', Rule::in(['active','inactive','suspended'])],
         ];
     }
 }

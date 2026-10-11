@@ -10,15 +10,6 @@ final class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([
-            RoleSeeder::class,
-            PermissionSeeder::class,
-            GovernorateSeeder::class,
-            LoanTypeSeeder::class,
-            SettingSeeder::class,
-            BankSeeder::class,
-            InstallmentCompanySeeder::class,
-            UserSeeder::class,
-        ]);
+        $this->call(CollexDemoSeeder::class);
     }
 }

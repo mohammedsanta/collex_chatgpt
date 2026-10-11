@@ -9,25 +9,28 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class SearchPortfolios
 {
-    public function execute(?string $search = null): Builder
-    {
+    public function execute(
+        ?string $search = null,
+        ?string $status = null
+    ): Builder {
         return Portfolio::query()
+            ->with(['bank'])
+            ->withCount('debtCases')
+            ->when(filled($search), function (Builder $query) use ($search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhereHas('bank', function (Builder $bankQuery) use ($search): void {
+                            $bankQuery->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->when(
-                filled($search),
-                function (Builder $query) use ($search): void {
-                    $query->where(function (Builder $query) use ($search): void {
-                        $query
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhereHas(
-                                'bank',
-                                fn (Builder $bankQuery) => $bankQuery
-                                    ->where('name', 'like', "%{$search}%")
-                            );
-                    });
-                }
+                in_array($status, ['draft', 'active', 'archived'], true),
+                fn (Builder $query) => $query->where('status', $status)
             )
-            ->with('bank')
             ->orderByDesc('period_year')
-            ->orderByDesc('period_month');
+            ->orderByDesc('period_month')
+            ->orderByDesc('id');
     }
 }
