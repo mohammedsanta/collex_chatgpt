@@ -62,6 +62,7 @@ final class PromiseToPayController extends Controller
 
     public function update(
         UpdatePromiseToPayRequest $request,
+        string $bank,
         PromiseToPay $promise,
         UpdatePromiseToPay $action
     ): PromiseToPay {

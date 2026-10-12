@@ -1,157 +1,168 @@
 @extends('layouts.app')
 
-@section('content')
-<div class="mx-auto max-w-4xl px-4 py-8" dir="rtl">
+@section('title', 'إنشاء محفظة | Collex')
 
-    <div class="mb-6">
+@section('content')
+    <x-page-header
+        title="إنشاء محفظة جديدة"
+        subtitle="إنشاء محفظة تحصيل جديدة مرتبطة ببنك {{ $bank->name }}."
+        eyebrow="إدارة المحافظ"
+        icon="fa-layer-group"
+    />
+
+    <div class="mx-auto max-w-4xl space-y-5">
         <a
             href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
-            class="text-sm text-gray-400 hover:text-lime-400"
+            class="inline-flex items-center gap-2 text-sm text-dim transition hover:text-main"
         >
-            ← العودة إلى توزيع المحافظ
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+            العودة إلى محافظ البنك
         </a>
 
-        <h1 class="mt-4 text-2xl font-bold text-white">
-            إنشاء محفظة جديدة
-        </h1>
+        @if ($errors->any())
+            <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300" role="alert">
+                <p class="mb-2 font-semibold">يرجى مراجعة البيانات التالية:</p>
 
-        <p class="mt-2 text-sm text-gray-400">
-            إنشاء محفظة جديدة لبنك {{ $bank->name }}
-        </p>
-    </div>
-
-    @if ($errors->any())
-        <div class="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
-            <ul class="list-inside list-disc space-y-1">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="rounded-2xl border border-gray-700 bg-gray-900 p-6">
-        <form action="{{ route('portfolios.store') }}" method="POST" class="space-y-5">
-            @csrf
-
-            <input type="hidden" name="bank_id" value="{{ $bank->id }}">
-
-            <div>
-                <label class="mb-2 block text-sm font-medium text-gray-300">
-                    البنك
-                </label>
-
-                <input
-                    type="text"
-                    value="{{ $bank->name }}"
-                    readonly
-                    class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-gray-400"
-                >
+                <ul class="list-inside list-disc space-y-1 text-sm">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
+        @endif
 
-            <div>
-                <label for="name" class="mb-2 block text-sm font-medium text-gray-300">
-                    اسم المحفظة
-                </label>
+        <x-panel
+            title="بيانات المحفظة"
+            subtitle="أدخل اسم المحفظة والفترة المالية الخاصة بها."
+            icon="fa-file-circle-plus"
+        >
+            <form
+                method="POST"
+                action="{{ route('banks.distribution.store', ['bank' => $bank->id]) }}"
+                class="space-y-5"
+            >
+                @csrf
 
-                <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value="{{ old('name') }}"
-                    required
-                    maxlength="255"
-                    placeholder="مثال: محفظة أكتوبر 2026"
-                    class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime-400 focus:outline-none"
-                >
-            </div>
-
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
-                    <label for="period_year" class="mb-2 block text-sm font-medium text-gray-300">
-                        السنة
+                    <label for="name" class="mb-2 block text-sm font-semibold text-main">
+                        اسم المحفظة
                     </label>
 
                     <input
-                        id="period_year"
-                        name="period_year"
-                        type="number"
-                        value="{{ old('period_year', now()->year) }}"
-                        min="2000"
-                        max="2200"
+                        id="name"
+                        type="text"
+                        name="name"
+                        value="{{ old('name') }}"
                         required
-                        class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-lime-400 focus:outline-none"
+                        maxlength="255"
+                        placeholder="مثال: محفظة أكتوبر 2026"
+                        class="w-full rounded-xl border border-line bg-surface px-4 py-3 text-main placeholder:text-dim outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
                     >
+
+                    @error('name')
+                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div>
+                        <label for="period_month" class="mb-2 block text-sm font-semibold text-main">
+                            شهر المحفظة
+                        </label>
+
+                        <select
+                            id="period_month"
+                            name="period_month"
+                            required
+                            class="w-full rounded-xl border border-line bg-surface px-4 py-3 text-main outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                        >
+                            <option value="">اختر الشهر</option>
+
+                            @foreach (range(1, 12) as $month)
+                                <option
+                                    value="{{ $month }}"
+                                    @selected((string) old('period_month') === (string) $month)
+                                >
+                                    {{ $month }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('period_month')
+                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="period_year" class="mb-2 block text-sm font-semibold text-main">
+                            سنة المحفظة
+                        </label>
+
+                        <input
+                            id="period_year"
+                            type="number"
+                            name="period_year"
+                            value="{{ old('period_year', now()->year) }}"
+                            required
+                            min="2000"
+                            max="2100"
+                            class="w-full rounded-xl border border-line bg-surface px-4 py-3 text-main outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                        >
+
+                        @error('period_year')
+                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div>
-                    <label for="period_month" class="mb-2 block text-sm font-medium text-gray-300">
-                        الشهر
+                    <label for="notes" class="mb-2 block text-sm font-semibold text-main">
+                        ملاحظات <span class="font-normal text-dim">(اختياري)</span>
                     </label>
 
-                    <select
-                        id="period_month"
-                        name="period_month"
-                        required
-                        class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-lime-400 focus:outline-none"
-                    >
-                        <option value="">اختر الشهر</option>
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        rows="4"
+                        placeholder="أضف أي ملاحظات تخص المحفظة..."
+                        class="w-full rounded-xl border border-line bg-surface px-4 py-3 text-main placeholder:text-dim outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                    >{{ old('notes') }}</textarea>
 
-                        @foreach ([
-                            1 => 'يناير',
-                            2 => 'فبراير',
-                            3 => 'مارس',
-                            4 => 'أبريل',
-                            5 => 'مايو',
-                            6 => 'يونيو',
-                            7 => 'يوليو',
-                            8 => 'أغسطس',
-                            9 => 'سبتمبر',
-                            10 => 'أكتوبر',
-                            11 => 'نوفمبر',
-                            12 => 'ديسمبر',
-                        ] as $number => $month)
-                            <option
-                                value="{{ $number }}"
-                                @selected((string) old('period_month', now()->month) === (string) $number)
-                            >
-                                {{ $month }}
-                            </option>
-                        @endforeach
-                    </select>
+                    @error('notes')
+                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
                 </div>
-            </div>
 
-            <div>
-                <label for="notes" class="mb-2 block text-sm font-medium text-gray-300">
-                    ملاحظات (اختياري)
-                </label>
+                <div class="rounded-xl border border-line bg-surface p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-circle-info mt-0.5 text-brand"></i>
 
-                <textarea
-                    id="notes"
-                    name="notes"
-                    rows="4"
-                    class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-lime-400 focus:outline-none"
-                    placeholder="ملاحظات تخص المحفظة..."
-                >{{ old('notes') }}</textarea>
-            </div>
+                        <div>
+                            <p class="text-sm font-semibold text-main">حالة المحفظة عند الإنشاء</p>
+                            <p class="mt-1 text-sm text-dim">
+                                سيتم إنشاء المحفظة كمسودة، ويمكن تفعيلها لاحقًا من صفحة محافظ البنك.
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="flex flex-wrap gap-3 border-t border-gray-700 pt-5">
-                <button
-                    type="submit"
-                    class="rounded-xl bg-lime-400 px-6 py-3 font-bold text-gray-950 hover:bg-lime-300"
-                >
-                    إنشاء المحفظة
-                </button>
+                <div class="flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+                    <a
+                        href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-line px-5 py-2.5 text-sm font-semibold text-dim transition hover:bg-surface hover:text-main"
+                    >
+                        إلغاء
+                    </a>
 
-                <a
-                    href="{{ route('banks.distribution.index', ['bank' => $bank->id]) }}"
-                    class="rounded-xl border border-gray-700 px-6 py-3 text-gray-300 hover:bg-gray-800"
-                >
-                    إلغاء
-                </a>
-            </div>
-        </form>
+                    <button
+                        type="submit"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-slate-950 transition hover:opacity-90"
+                    >
+                        <i class="fa-solid fa-floppy-disk text-sm"></i>
+                        إنشاء المحفظة
+                    </button>
+                </div>
+            </form>
+        </x-panel>
     </div>
-</div>
 @endsection

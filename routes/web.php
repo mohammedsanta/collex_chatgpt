@@ -387,6 +387,31 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::post('/{bank}/dcr', [BankDcrController::class, 'store'])
                 ->whereNumber('bank')
                 ->name('dcr.store');
+
+            
+            // Daily Collection Report status transitions
+            Route::post('/{bank}/dcr/{dailyReport}/submit', [
+                DailyCollectionReportStatusController::class,
+                'submit',
+            ])
+                ->whereNumber(['bank', 'dailyReport'])
+                ->name('dcr.submit');
+
+            Route::post('/{bank}/dcr/{dailyReport}/approve', [
+                DailyCollectionReportStatusController::class,
+                'approve',
+            ])
+                ->whereNumber(['bank', 'dailyReport'])
+                ->name('dcr.approve');
+
+            Route::post('/{bank}/dcr/{dailyReport}/reject', [
+                DailyCollectionReportStatusController::class,
+                'reject',
+            ])
+                ->whereNumber(['bank', 'dailyReport'])
+                ->name('dcr.reject');
+
+
         });
 
     /* Installment companies */

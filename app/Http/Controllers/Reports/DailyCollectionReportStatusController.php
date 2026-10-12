@@ -14,21 +14,64 @@ use Illuminate\Http\Request;
 
 final class DailyCollectionReportStatusController extends Controller
 {
-    public function submit(Request $request, DailyCollectionReport $report, SubmitDailyCollectionReport $action): DailyCollectionReport
-    {
-        $this->authorize('submit', $report);
-        return $action->execute($report);
+
+    public function submit(
+        Request $request,
+        string $bank,
+        DailyCollectionReport $dailyReport,
+        SubmitDailyCollectionReport $action
+    ): DailyCollectionReport {
+        $this->authorize('submit', $dailyReport);
+
+        abort_unless(
+            (int) $dailyReport->bank_id === (int) $bank,
+            404
+        );
+
+        return $action->execute($dailyReport);
     }
 
-    public function approve(Request $request, DailyCollectionReport $report, ApproveDailyCollectionReport $action): DailyCollectionReport
-    {
-        $this->authorize('approve', $report);
-        return $action->execute($report, (int) $request->user()->getAuthIdentifier());
+
+
+    public function approve(
+        Request $request,
+        string $bank,
+        DailyCollectionReport $dailyReport,
+        ApproveDailyCollectionReport $action
+    ): DailyCollectionReport {
+        $this->authorize('approve', $dailyReport);
+
+        abort_unless(
+            (int) $dailyReport->bank_id === (int) $bank,
+            404
+        );
+
+        return $action->execute(
+            $dailyReport,
+            (int) $request->user()->getAuthIdentifier()
+        );
     }
 
-    public function reject(RejectDailyCollectionReportRequest $request, DailyCollectionReport $report, RejectDailyCollectionReport $action): DailyCollectionReport
-    {
-        $this->authorize('reject', $report);
-        return $action->execute($report, $request->validated('reason'));
+
+
+    public function reject(
+        RejectDailyCollectionReportRequest $request,
+        string $bank,
+        DailyCollectionReport $dailyReport,
+        RejectDailyCollectionReport $action
+    ): DailyCollectionReport {
+        $this->authorize('reject', $dailyReport);
+
+        abort_unless(
+            (int) $dailyReport->bank_id === (int) $bank,
+            404
+        );
+
+        return $action->execute(
+            $dailyReport,
+            $request->validated('reason')
+        );
     }
+
+
 }
